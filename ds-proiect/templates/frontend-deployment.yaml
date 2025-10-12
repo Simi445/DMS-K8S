@@ -1,0 +1,41 @@
+apiVersion: "apps/v1"
+kind: "Deployment"
+metadata:
+  name: {{ .Values.frontendService.appName }}
+  namespace: "default"
+  labels:
+    app: {{ .Values.frontendService.appName }}
+spec:
+  replicas: {{ .Values.frontendService.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.frontendService.appName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.frontendService.appName }}
+    spec:
+      containers:
+      - name: {{ .Values.frontendService.appName }}
+        image: {{ .Values.frontendService.image }}
+        imagePullPolicy: Always
+
+
+---
+apiVersion: "v1"
+kind: "Service"
+metadata:
+  name: "{{ .Values.frontendService.appName }}-service"
+  namespace: "default"
+  labels:
+    app: {{ .Values.frontendService.appName }}
+spec:
+  type: NodePort
+  ports:
+  - protocol: "TCP"
+    port: 80
+    targetPort: 5173
+    nodePort: 30000
+  selector:
+    app: {{ .Values.frontendService.appName }}
+  loadBalancerIP: ""

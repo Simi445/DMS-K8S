@@ -1,0 +1,8 @@
+blinker
+click
+Flask
+flask-swagger-ui
+itsdangerous
+Jinja2
+MarkupSafe
+Werkzeug

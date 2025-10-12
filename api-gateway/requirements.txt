@@ -1,0 +1,16 @@
+blinker
+certifi
+cffi
+charset-normalizer
+click
+cryptography
+Flask
+idna
+itsdangerous
+Jinja2
+MarkupSafe
+pycparser
+requests
+urllib3
+Werkzeug
+PyJWT

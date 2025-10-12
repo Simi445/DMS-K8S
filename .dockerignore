@@ -1,0 +1,39 @@
+# Ignore virtual environments
+**/*-env/
+
+# Ignore node_modules
+**/node_modules/
+
+# Ignore temporary files
+*.log
+*.tmp
+*.swp
+
+# Ignore Python cache files
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+
+# Ignore build artifacts
+**/dist/
+**/build/
+
+# Ignore configuration files not needed for the build
+*.cfg
+*.gitignore
+*.eslint*
+*.tsconfig*
+
+# Ignore Helm and Kubernetes files
+**/charts/
+**/templates/
+**/values.yaml
+
+# Ignore other unnecessary files
+*.lock
+*.bak
+*.swp
+*.DS_Store
+*.env
+*.idea/
+*.vscode/

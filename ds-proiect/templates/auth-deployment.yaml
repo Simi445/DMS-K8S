@@ -1,0 +1,130 @@
+apiVersion: "apps/v1"
+kind: "Deployment"
+metadata:
+  name: {{ .Values.authService.appName }}
+  namespace: "default"
+  labels:
+    app: {{ .Values.authService.appName }}
+spec:
+  replicas: {{ .Values.authService.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.authService.appName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.authService.appName }}
+    spec:
+      containers:
+      - name: {{ .Values.authService.appName }}
+        image: {{ .Values.authService.image }}
+        imagePullPolicy: Always
+        env:
+          - name: "SECRET_KEY"
+            value: {{ .Values.secretKey }}
+          - name: "USER_SERVICE_URL"
+            value: {{ .Values.authService.userServiceDNS }}
+
+
+---
+apiVersion: "v1"
+kind: "Service"
+metadata:
+  name: "{{ .Values.authService.appName }}-service"
+  namespace: "default"
+  labels:
+    app: {{ .Values.authService.appName }}
+spec:
+  ports:
+  - protocol: "TCP"
+    port: 80
+    targetPort: 5000
+  selector:
+    app: {{ .Values.authService.appName }}
+  type: "ClusterIP"
+  loadBalancerIP: ""
+
+---
+apiVersion: "v1"
+kind: "ConfigMap"
+metadata:
+  name: "{{ .Values.authService.postgresName }}-config"
+  namespace: "default"
+  labels:
+    app: {{ .Values.authService.postgresName }}
+data:
+  POSTGRES_DB: "auth"
+  POSTGRES_USER: "simion"
+  POSTGRES_PASSWORD: "12345"
+
+
+---
+apiVersion: "apps/v1"
+kind: "Deployment"
+metadata:
+  name: {{ .Values.authService.postgresName }}
+  namespace: "default"
+  labels:
+    app: {{ .Values.authService.postgresName }}
+spec:
+  replicas: {{ .Values.authService.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.authService.postgresName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.authService.postgresName }}
+    spec:
+      containers:
+      - name: {{ .Values.authService.postgresName }}
+        image: "postgres:9.6.2"
+        env:
+        - name: "POSTGRES_DB"
+          valueFrom:
+            configMapKeyRef:
+              key: "POSTGRES_DB"
+              name: "{{ .Values.authService.postgresName }}-config"
+        - name: "POSTGRES_USER"
+          valueFrom:
+            configMapKeyRef:
+              key: "POSTGRES_USER"
+              name: "{{ .Values.authService.postgresName }}-config"
+        - name: "POSTGRES_PASSWORD"
+          valueFrom:
+            configMapKeyRef:
+              key: "POSTGRES_PASSWORD"
+              name: "{{ .Values.authService.postgresName }}-config"
+        ports:
+          - containerPort: 5432
+            name: {{ .Values.authService.postgresName }}
+        volumeMounts:
+          - name: "{{ .Values.authService.postgresName }}-storage"
+            mountPath: /var/lib/postgresql/db-data
+      volumes:
+        - name: "{{ .Values.authService.postgresName }}-storage"
+          persistentVolumeClaim:
+            claimName: "{{ .Values.authService.postgresName }}-pv-claim"
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: "{{ .Values.authService.postgresName }}-pv-claim"
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.authService.postgresName }}
+spec:
+  ports:
+    - port: 5432
+  selector:
+    app: {{ .Values.authService.postgresName }}

@@ -1,0 +1,43 @@
+
+authService:
+  appName: "flask-auth"
+  replicaCount: 1
+  image: "registry.hub.docker.com/simike197/ds-proiect:backend-auth"
+  postgresName: "postgres-auth"
+  userServiceDNS: "http://flask-user-service.default.svc.cluster.local"
+
+userService:
+  appName: "flask-user"
+  replicaCount: 1
+  image: "registry.hub.docker.com/simike197/ds-proiect:backend-user"
+  postgresName: "postgres-user"
+  authServiceDNS: "http://flask-auth-service.default.svc.cluster.local"
+  deviceServiceDNS: "http://flask-device-service.default.svc.cluster.local"
+
+
+deviceService:
+  appName: "flask-device"
+  replicaCount: 1
+  image: "registry.hub.docker.com/simike197/ds-proiect:backend-device"
+  postgresName: "postgres-device"
+  authServiceDNS: "http://flask-auth-service.default.svc.cluster.local"
+  deviceServiceDNS: "http://flask-device-service.default.svc.cluster.local"
+
+
+apiService:
+  appName: "jwt-verifier"
+  replicaCount: 1
+  image: "registry.hub.docker.com/simike197/ds-proiect:api-gateway"
+
+frontendService:
+  appName: "frontend"
+  replicaCount: 1
+  image: "registry.hub.docker.com/simike197/ds-proiect:frontend"
+
+
+swaggerService:
+  appName: "swagger"
+  replicaCount: 1
+  image: "registry.hub.docker.com/simike197/ds-proiect:swagger"
+
+secretKey: top123

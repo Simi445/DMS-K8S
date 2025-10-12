@@ -1,0 +1,124 @@
+apiVersion: "apps/v1"
+kind: "Deployment"
+metadata:
+  name: {{ .Values.deviceService.appName }}
+  namespace: "default"
+  labels:
+    app: {{ .Values.deviceService.appName }}
+spec:
+  replicas: {{ .Values.deviceService.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.deviceService.appName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.deviceService.appName }}
+    spec:
+      containers:
+      - name: {{ .Values.deviceService.appName }}
+        image: {{ .Values.deviceService.image }}
+        imagePullPolicy: Always
+        
+---
+apiVersion: "v1"
+kind: "Service"
+metadata:
+  name: "{{ .Values.deviceService.appName }}-service"
+  namespace: "default"
+  labels:
+    app: {{ .Values.deviceService.appName }}
+spec:
+  ports:
+  - protocol: "TCP"
+    port: 80
+    targetPort: 5001
+  selector:
+    app: {{ .Values.deviceService.appName }}
+  type: "ClusterIP"
+  loadBalancerIP: ""
+
+---
+apiVersion: "v1"
+kind: "ConfigMap"
+metadata:
+  name: "{{ .Values.deviceService.postgresName }}-config"
+  namespace: "default"
+  labels:
+    app: {{ .Values.deviceService.postgresName }}
+data:
+  POSTGRES_DB: "device"
+  POSTGRES_USER: "simion"
+  POSTGRES_PASSWORD: "12345"
+
+
+---
+apiVersion: "apps/v1"
+kind: "Deployment"
+metadata:
+  name: {{ .Values.deviceService.postgresName }}
+  namespace: "default"
+  labels:
+    app: {{ .Values.deviceService.postgresName }}
+spec:
+  replicas: {{ .Values.deviceService.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.deviceService.postgresName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.deviceService.postgresName }}
+    spec:
+      containers:
+      - name: {{ .Values.deviceService.postgresName }}
+        image: "postgres:9.6.2"
+        env:
+        - name: "POSTGRES_DB"
+          valueFrom:
+            configMapKeyRef:
+              key: "POSTGRES_DB"
+              name: "{{ .Values.deviceService.postgresName }}-config"
+        - name: "POSTGRES_USER"
+          valueFrom:
+            configMapKeyRef:
+              key: "POSTGRES_USER"
+              name: "{{ .Values.deviceService.postgresName }}-config"
+        - name: "POSTGRES_PASSWORD"
+          valueFrom:
+            configMapKeyRef:
+              key: "POSTGRES_PASSWORD"
+              name: "{{ .Values.deviceService.postgresName }}-config"
+        ports:
+          - containerPort: 5432
+            name: {{ .Values.deviceService.postgresName }}
+        volumeMounts:
+          - name: "{{ .Values.deviceService.postgresName }}-storage"
+            mountPath: /var/lib/postgresql/db-data
+      volumes:
+        - name: "{{ .Values.deviceService.postgresName }}-storage"
+          persistentVolumeClaim:
+            claimName: "{{ .Values.deviceService.postgresName }}-pv-claim"
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: "{{ .Values.deviceService.postgresName }}-pv-claim"
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.deviceService.postgresName }}
+spec:
+  ports:
+    - port: 5432
+  selector:
+    app: {{ .Values.deviceService.postgresName }}

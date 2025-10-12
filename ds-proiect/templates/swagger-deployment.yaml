@@ -1,0 +1,41 @@
+apiVersion: "apps/v1"
+kind: "Deployment"
+metadata:
+  name: {{ .Values.swaggerService.appName }}
+  namespace: "default"
+  labels:
+    app: {{ .Values.swaggerService.appName }}
+spec:
+  replicas: {{ .Values.swaggerService.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.swaggerService.appName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.swaggerService.appName }}
+    spec:
+      containers:
+      - name: {{ .Values.swaggerService.appName }}
+        image: {{ .Values.swaggerService.image }}
+        imagePullPolicy: Always
+
+
+---
+apiVersion: "v1"
+kind: "Service"
+metadata:
+  name: "{{ .Values.swaggerService.appName }}-service"
+  namespace: "default"
+  labels:
+    app: {{ .Values.swaggerService.appName }}
+spec:
+  ports:
+  - protocol: "TCP"
+    port: 80
+    targetPort: 5015
+    nodePort: 30001
+  selector:
+    app: {{ .Values.swaggerService.appName }}
+  type: "NodePort"
+  loadBalancerIP: ""

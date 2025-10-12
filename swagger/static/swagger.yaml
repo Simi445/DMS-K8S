@@ -1,0 +1,260 @@
+openapi: 3.0.0
+info:
+  title: API Gateway Proxy
+  description: Swagger documentation for the API Gateway proxy paths.
+  version: 1.0.0
+servers:
+  - url: http://ingress-nginx-controller.ingress-nginx.svc.cluster.local:80
+paths:
+  /register:
+    post:
+      summary: Register a new user
+      description: Proxy endpoint for user registration.
+      requestBody:
+        description: User registration details.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                email:
+                  type: string
+                role:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: User registered successfully.
+        '400':
+          description: Bad request.
+        '500':
+          description: Internal server error.
+  /login:
+    post:
+      summary: User login
+      description: Proxy endpoint for user login.
+      requestBody:
+        description: User login credentials.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login successful.
+        '401':
+          description: Unauthorized.
+        '500':
+          description: Internal server error.
+  /users:
+    get:
+      summary: Get all users
+      description: Proxy endpoint to fetch all users.
+      responses:
+        '200':
+          description: List of users.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    username:
+                      type: string
+                    email:
+                      type: string
+                    role:
+                      type: string
+        '500':
+          description: Internal server error.
+  /edit-user:
+    put:
+      summary: Edit user details
+      description: Proxy endpoint to edit user details.
+      requestBody:
+        description: User details to update.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: string
+                username:
+                  type: string
+                email:
+                  type: string
+                role:
+                  type: string
+      responses:
+        '200':
+          description: User details updated successfully.
+        '400':
+          description: Bad request.
+        '500':
+          description: Internal server error.
+  /delete-user:
+    delete:
+      summary: Delete a user
+      description: Proxy endpoint to delete a user.
+      parameters:
+        - name: id
+          in: query
+          required: true
+          description: ID of the user to delete.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User deleted successfully.
+        '400':
+          description: Bad request.
+        '500':
+          description: Internal server error.
+  /add-device:
+    post:
+      summary: Add a new device
+      description: Proxy endpoint to add a new device.
+      requestBody:
+        description: Device details to add.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                status:
+                  type: string
+                consumption:
+                  type: string
+                user_id:
+                  type: string
+      responses:
+        '200':
+          description: Device added successfully.
+        '400':
+          description: Bad request.
+        '500':
+          description: Internal server error.
+  /devices:
+    get:
+      summary: Get all devices
+      description: Proxy endpoint to fetch all devices.
+      responses:
+        '200':
+          description: List of devices.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    name:
+                      type: string
+                    status:
+                      type: string
+                    consumption:
+                      type: string
+                    user_id:
+                      type: string
+        '500':
+          description: Internal server error.
+  /devices/{id}:
+    get:
+      summary: Get device details
+      description: Proxy endpoint to fetch details of a specific device.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the device.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Device details.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                  status:
+                    type: string
+                  consumption:
+                    type: string
+                  user_id:
+                    type: string
+        '404':
+          description: Device not found.
+        '500':
+          description: Internal server error.
+  /delete-device:
+    delete:
+      summary: Delete a device
+      description: Proxy endpoint to delete a device.
+      parameters:
+        - name: id
+          in: query
+          required: true
+          description: ID of the device to delete.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Device deleted successfully.
+        '400':
+          description: Bad request.
+        '500':
+          description: Internal server error.
+  /edit-device:
+    put:
+      summary: Edit device details
+      description: Proxy endpoint to edit device details.
+      requestBody:
+        description: Device details to update.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: string
+                name:
+                  type: string
+                status:
+                  type: string
+                consumption:
+                  type: string
+                user_id:
+                  type: string
+      responses:
+        '200':
+          description: Device details updated successfully.
+        '400':
+          description: Bad request.
+        '500':
+          description: Internal server error.

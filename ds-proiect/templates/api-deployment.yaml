@@ -1,0 +1,43 @@
+apiVersion: "apps/v1"
+kind: "Deployment"
+metadata:
+  name: {{ .Values.apiService.appName }}
+  namespace: "default"
+  labels:
+    app: {{ .Values.apiService.appName }}
+spec:
+  replicas: {{ .Values.apiService.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.apiService.appName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.apiService.appName }}
+    spec:
+      containers:
+      - name: {{ .Values.apiService.appName }}
+        image: {{ .Values.apiService.image }}
+        imagePullPolicy: Always
+        env:
+          - name: "SECRET_KEY"
+            value: {{ .Values.secretKey }}
+
+
+---
+apiVersion: "v1"
+kind: "Service"
+metadata:
+  name: "{{ .Values.apiService.appName }}-service"
+  namespace: "default"
+  labels:
+    app: {{ .Values.apiService.appName }}
+spec:
+  ports:
+  - protocol: "TCP"
+    port: 80
+    targetPort: 5003
+  selector:
+    app: {{ .Values.apiService.appName }}
+  type: "ClusterIP"
+  loadBalancerIP: ""
