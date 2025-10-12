@@ -26,26 +26,33 @@ Follow these steps to set up the project on Minikube:
 ### Steps
 
 1. **Start Minikube:**
-   ```bash
-   minikube start --driver=hyperv
-   ```
+
+   - For Linux:
+     ```bash
+     minikube start
+     ```
+
+   - For Windows (using Hyper-V driver):
+     ```bash
+     minikube start --driver=hyperv
+     ```
 
 2. **Enable Ingress Controller:**
    ```bash
    minikube addons enable ingress
    ```
 
-4. **Deploy the Helm Chart:**
+3. **Deploy the Helm Chart:**
    ```bash
    helm install proiect ./ds-proiect
    ```
 
-5. **Verify the Deployment:**
+4. **Verify the Deployment:**
    ```bash
    kubectl get all
    ```
 
-6. **Access the Application:**
+5. **Access the Application:**
    - Use `minikube ip` to get the Minikube IP.
    - Access the services via the configured ingress routes.
 
