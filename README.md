@@ -6,6 +6,7 @@ Follow these steps to set up the project on Minikube:
 
 - Install [Minikube](https://minikube.sigs.k8s.io/docs/start/).
 - Install [Helm](https://helm.sh/docs/intro/install/).
+- Install [kubectl](https://kubernetes.io/docs/tasks/tools/).
 - Ensure Docker is installed and running.
 
 ### Steps
