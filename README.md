@@ -92,6 +92,10 @@ Core features include:
 - Persistent storage for PostgreSQL databases via PVCs  
 - Central ingress entrypoint with NGINX routing rules  
 
+### Deployment Diagram
+
+![Deployment Architecture](deployment.png)
+
 ### Simplified Deployment Diagram
 
 ```
