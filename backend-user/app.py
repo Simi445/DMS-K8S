@@ -12,8 +12,8 @@ import psycopg2
 app = Flask(__name__)
 app.config.from_pyfile('config.cfg')
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'fallback-secret-for-development-only')
-DEVICE_SERVICE_URL = os.environ.get('DEVICE_SERVICE_URL', 'http://localhost:5001')
 AUTH_SERVICE_URL = os.environ.get('AUTH_SERVICE_URL', 'http://localhost:5000')
+DEVICE_SERVICE_URL = os.environ.get('DEVICE_SERVICE_URL', 'http://localhost:5001')
 
 db = SQLAlchemy(app)
 
@@ -32,70 +32,6 @@ class UserAuth(db.Model):
     auth_id = db.Column(db.Integer, nullable=False)
 
 
-@app.route('/verify-login', methods=["POST"])
-def verify_login():
-    data = request.get_json()
-    username = data.get("username")
-    user = db.session.execute(db.select(User).filter_by(username=username)).scalar()
-    
-    if user:
-        user_auth = db.session.execute(db.select(UserAuth).filter_by(user_id=user.user_id)).scalar()
-        
-        if user_auth:
-            response = {"ok": "User exists successfully", "auth_id": user_auth.auth_id}
-            return app.response_class(
-                response=json.dumps(response),
-                status=201,
-                mimetype='application/json'
-            )
-        else:
-            response = {"error": "User authentication record not found!"}
-            return app.response_class(
-                response=json.dumps(response),
-                status=404,
-                mimetype='application/json'
-            )
-    else:
-        response = {"error": "User not found!"}
-        return app.response_class(
-            response=json.dumps(response),
-            status=404,
-            mimetype='application/json'
-        )
-
-@app.route('/verify-register', methods=["POST"])
-def verify_register():
-    data = request.get_json()
-    auth_id = data.get("auth_id")
-    username = data.get("username")
-    email = data.get("email")
-    role = data.get("role")
-
-    account_username = db.session.execute(db.select(User).filter_by(username=username)).first()
-    account_email = db.session.execute(db.select(User).filter_by(email=email)).first()
-
-    if account_username:
-        response = {"error": "Account Username exists!"}
-        return app.response_class(
-            response=json.dumps(response),
-            status=400,
-            mimetype='application/json'
-        )
-
-    if account_email:
-        response = {"error": "Email in use!"}
-        return app.response_class(
-            response=json.dumps(response),
-            status=400,
-            mimetype='application/json'
-        )
-
-    response = {'ok': 'User does not exist, can be created'}
-    return app.response_class(
-            response=json.dumps(response),
-            status=201,
-            mimetype='application/json'
-        )
 
 @app.route('/create-user', methods=["POST"])
 def create_user():
@@ -112,17 +48,6 @@ def create_user():
 
         user_auth = UserAuth(auth_id=auth_id, user_id=user_record.user_id)
         db.session.add(user_auth)
-
-        payload = {"user_id": user_record.user_id}
-        user_response = requests.post(f'{DEVICE_SERVICE_URL}/add-user', json=payload)
-        
-        if user_response.status_code != 201:
-            db.session.rollback()  
-            return app.response_class(
-                response=user_response.text,
-                status=user_response.status_code,
-                mimetype='application/json'
-            )
 
         db.session.commit() 
 
@@ -145,27 +70,36 @@ def create_user():
 
 @app.route('/user/<int:auth_id>', methods=["GET"])
 def get_user_by_auth_id(auth_id):
-    user_auth = db.session.execute(db.select(UserAuth).filter_by(auth_id=auth_id)).scalar()
-    if user_auth:
-        user = db.session.execute(db.select(User).filter_by(user_id=user_auth.user_id)).scalar()
-        if user:
-            response = {
-                "username": user.username,
-                "email": user.email,
-                "role": user.role
-            }
-            return app.response_class(
-                response=json.dumps(response),
-                status=200,
-                mimetype='application/json'
-            )
-    
-    response = {"error": "User not found"}
-    return app.response_class(
-        response=json.dumps(response),
-        status=404,
-        mimetype='application/json'
-    )
+    try:
+        user_auth = db.session.execute(db.select(UserAuth).filter_by(auth_id=auth_id)).scalar()
+        if user_auth:
+            user = db.session.execute(db.select(User).filter_by(user_id=user_auth.user_id)).scalar()
+            if user:
+                response = {
+                    "username": user.username,
+                    "email": user.email,
+                    "role": user.role
+                }
+                return app.response_class(
+                    response=json.dumps(response),
+                    status=200,
+                    mimetype='application/json'
+                )
+        
+        response = {"error": "User not found"}
+        return app.response_class(
+            response=json.dumps(response),
+            status=404,
+            mimetype='application/json'
+        )
+    except Exception as e:
+        print(f'Exception in get_user_by_auth_id: {e}')
+        response = {"error": f"Internal server error: {str(e)}"}
+        return app.response_class(
+            response=json.dumps(response),
+            status=500,
+            mimetype='application/json'
+        )
 
 @app.route('/users', methods=["GET"])
 def get_users():
@@ -180,8 +114,10 @@ def get_users():
     
     users_list = []
     for user in users:
+        user_auth = db.session.execute(db.select(UserAuth).filter_by(user_id=user.user_id)).scalar()
         users_list.append({
             "user_id": user.user_id,
+            "auth_id": user_auth.auth_id if user_auth else None,
             "username": user.username,
             "email": user.email,
             "role": user.role
@@ -197,14 +133,13 @@ def get_users():
 @app.route('/edit-user', methods=["PUT"])
 def edit_user():
     data = request.get_json()
-    user_id = data.get("user_id")
+    auth_id = data.get("auth_id")
     username = data.get("username")
     email = data.get("email")
     role = data.get("role")
-    password = data.get("password")
 
-    if user_id is None:
-        response = {"error": "user_id is required to edit a user"}
+    if auth_id is None:
+        response = {"error": "auth_id is required to edit a user"}
         return app.response_class(
             response=json.dumps(response),
             status=400,
@@ -212,7 +147,16 @@ def edit_user():
         )
 
     try:
-        account = db.session.execute(db.select(User).filter_by(user_id=user_id)).scalar()
+        user_auth = db.session.execute(db.select(UserAuth).filter_by(auth_id=auth_id)).scalar()
+        if not user_auth:
+            response = {"error": "User auth association not found"}
+            return app.response_class(
+                response=json.dumps(response),
+                status=404,
+                mimetype='application/json'
+            )
+
+        account = db.session.execute(db.select(User).filter_by(user_id=user_auth.user_id)).scalar()
         if not account:
             response = {"error": "User not found"}
             return app.response_class(
@@ -221,32 +165,30 @@ def edit_user():
                 mimetype='application/json'
             )
 
-
         account.username = username
         account.email = email
         account.role = role
 
-        auth_entry = db.session.execute(db.select(UserAuth).filter_by(user_id=account.user_id)).scalar()
-        if not auth_entry:
-            response = {"error": "User authentication record not found"}
+        db.session.commit()
+
+        auth_payload = {"auth_id": auth_id, "username": username, "email": email}
+        try:
+            auth_response = requests.put(f'{AUTH_SERVICE_URL}/edit-auth', json=auth_payload, timeout=5)
+            if auth_response.status_code != 200:
+                response = {"error": f"User updated, but auth update failed: {auth_response.text}"}
+                return app.response_class(
+                    response=json.dumps(response),
+                    status=500,
+                    mimetype='application/json'
+                )
+        except Exception as e:
+            response = {"error": f"User updated, but failed to contact auth service: {str(e)}"}
             return app.response_class(
                 response=json.dumps(response),
-                status=404,
+                status=500,
                 mimetype='application/json'
             )
 
-        auth_payload = {"auth_id": auth_entry.auth_id, "password": password}
-        user_response = requests.put(f'{AUTH_SERVICE_URL}/edit-auth', json=auth_payload, timeout=5)
-
-        if user_response.status_code not in (200, 204):
-            db.session.rollback()
-            return app.response_class(
-                response=user_response.text,
-                status=user_response.status_code,
-                mimetype='application/json'
-            )
-
-        db.session.commit()
         response = {'ok': 'User edited successfully'}
         return app.response_class(
             response=json.dumps(response),
@@ -262,36 +204,15 @@ def edit_user():
             mimetype='application/json'
         )
 
-@app.route('/devices/<int:user_id>', methods=["GET"])
-def get_devices_of_user(user_id):
-    user = db.session.execute(db.select(User).filter_by(user_id=user_id)).scalar()
-    if user:
-        response = {
-            "username": user.username,
-            "email": user.email,
-            "role": user.role
-        }
-        return app.response_class(
-            response=json.dumps(response),
-            status=200,
-            mimetype='application/json'
-        )
-
-    response = {"error": "User not found"}
-    return app.response_class(
-        response=json.dumps(response),
-        status=404,
-        mimetype='application/json'
-    )
 
 
 @app.route('/delete-user', methods=["DELETE"])
 def delete_user():
     data = request.get_json()
-    user_id = data.get("user_id")
+    auth_id = data.get("auth_id")
 
-    if user_id is None:
-        response = {"error": "user_id is required to delete a user"}
+    if auth_id is None:
+        response = {"error": "auth_id is required to delete a user"}
         return app.response_class(
             response=json.dumps(response),
             status=400,
@@ -299,7 +220,16 @@ def delete_user():
         )
 
     try:
-        account = db.session.execute(db.select(User).filter_by(user_id=user_id)).scalar()
+        user_auth = db.session.execute(db.select(UserAuth).filter_by(auth_id=auth_id)).scalar()
+        if not user_auth:
+            response = {"error": "User auth association not found"}
+            return app.response_class(
+                response=json.dumps(response),
+                status=404,
+                mimetype='application/json'
+            )
+
+        account = db.session.execute(db.select(User).filter_by(user_id=user_auth.user_id)).scalar()
         if not account:
             response = {"error": "User not found"}
             return app.response_class(
@@ -308,29 +238,34 @@ def delete_user():
                 mimetype='application/json'
             )
 
-        auth_entry = db.session.execute(db.select(UserAuth).filter_by(user_id=account.user_id)).scalar()
+        auth_payload = {"auth_id": auth_id}
+        try:
+            auth_response = requests.delete(f'{AUTH_SERVICE_URL}/delete-auth', json=auth_payload, timeout=5)
+        except Exception as e:
+            response = {"error": f"Failed to contact auth service: {str(e)}"}
+            return app.response_class(
+                response=json.dumps(response),
+                status=500,
+                mimetype='application/json'
+            )
 
-        if auth_entry:
-            auth_payload = {"auth_id": auth_entry.auth_id}
-            try:
-                auth_response = requests.delete(f'{AUTH_SERVICE_URL}/delete-auth', json=auth_payload, timeout=5)
-            except Exception as e:
-                response = {"error": f"Failed to contact auth service: {str(e)}"}
-                return app.response_class(
-                    response=json.dumps(response),
-                    status=500,
-                    mimetype='application/json'
-                )
+        if auth_response.status_code not in (200, 204):
+            return app.response_class(
+                response=auth_response.text,
+                status=auth_response.status_code,
+                mimetype='application/json'
+            )
 
-            if auth_response.status_code not in (200, 204):
-                return app.response_class(
-                    response=auth_response.text,
-                    status=auth_response.status_code,
-                    mimetype='application/json'
-                )
+        try:
+            device_payload = {"auth_id": auth_id}
+            device_response = requests.delete(f'{DEVICE_SERVICE_URL}/remove-user', json=device_payload, timeout=5)
+            if device_response.status_code not in (200, 204):
+                print(f"Warning: Device service user removal failed: {device_response.text}")
+        except Exception as e:
+            print(f"Warning: Failed to contact device service for user removal: {str(e)}")
 
-        if auth_entry:
-            db.session.delete(auth_entry)
+        db.session.delete(user_auth)
+        db.session.flush()  
         db.session.delete(account)
         db.session.commit()
 

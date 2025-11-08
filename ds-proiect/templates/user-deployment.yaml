@@ -22,10 +22,10 @@ spec:
         env:
           - name: "SECRET_KEY"
             value: {{ .Values.secretKey }}
-          - name: "DEVICE_SERVICE_URL"
-            value: {{ .Values.userService.deviceServiceDNS }}
           - name: "AUTH_SERVICE_URL"
             value: {{ .Values.userService.authServiceDNS }}
+          - name: "DEVICE_SERVICE_URL"
+            value: {{ .Values.userService.deviceServiceDNS }}
 
 
 ---

@@ -27,7 +27,12 @@ export function DeviceTable({ deviceForm, _users, devices, _setDevices, getDevic
 
         const getDevicesById = async () => {
                 const user = _users.find((u) => u.username === username);
-                const userId = user.user_id;
+                if (!user || !user.auth_id) {
+                    console.log('User not found or auth_id missing:', user);
+                    setDevicesById([]);
+                    return;
+                }
+                const userId = user.auth_id;
 
                 try {
                         const response = await fetch(`/devices/${userId}`, {
@@ -63,7 +68,7 @@ export function DeviceTable({ deviceForm, _users, devices, _setDevices, getDevic
                     name: currentDevice.name,
                     maxConsumption: currentDevice.maxConsumption.toString(),
                     status: currentDevice.status,
-                    assignedTo: currentDevice.user_id?.toString() ?? 'no_user'
+                    assignedTo: currentDevice.auth_id?.toString() ?? 'no_user'
                 };
 
 
@@ -186,7 +191,7 @@ export function DeviceTable({ deviceForm, _users, devices, _setDevices, getDevic
                                         <SelectContent>
                                             <SelectItem value="no_user">Unassigned</SelectItem>
                                             {_users.map((user) => (
-                                                <SelectItem key={user.user_id} value={user.user_id.toString()}>
+                                                <SelectItem key={user.auth_id} value={user.auth_id.toString()}>
                                                     {user.username}
                                                 </SelectItem>
                                             ))}
@@ -274,7 +279,7 @@ function DeviceDelete({deviceId}: {deviceId: number})
                                 <TableCell>
                                     <Badge variant={device.status === "active" ? "default" : "secondary"}>{device.status}</Badge>
                                 </TableCell>
-                                <TableCell className="text-muted-foreground">{(_users.find(user => String(user.user_id) === String(device.user_id))?.username) || "Unassigned"}</TableCell>
+                                <TableCell className="text-muted-foreground">{(_users.find(user => String(user.auth_id) === String(device.auth_id))?.username) || "Unassigned"}</TableCell>
                                 <TableCell>
                                     <div className="flex gap-2">
                                         <DeviceEdit deviceId={device.device_id} />
@@ -293,7 +298,7 @@ function DeviceDelete({deviceId}: {deviceId: number})
                                 <TableCell>
                                     <Badge variant={device.status === "active" ? "default" : "secondary"}>{device.status}</Badge>
                                 </TableCell>
-                                <TableCell className="text-muted-foreground">{(_users.find(user => String(user.user_id) === String(device.user_id))?.username) || "Unassigned"}</TableCell>
+                                <TableCell className="text-muted-foreground">{(_users.find(user => String(user.auth_id) === String(device.auth_id))?.username) || "Unassigned"}</TableCell>
                                 <TableCell>
                                     <div className="flex gap-2">
                                         <DeviceEdit deviceId={device.device_id} />

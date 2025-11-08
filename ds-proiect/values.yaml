@@ -5,6 +5,7 @@ authService:
   image: "registry.hub.docker.com/simike197/ds-proiect:backend-auth"
   postgresName: "postgres-auth"
   userServiceDNS: "http://flask-user-service.default.svc.cluster.local"
+  deviceServiceDNS: "http://flask-device-service.default.svc.cluster.local"
 
 userService:
   appName: "flask-user"
@@ -20,8 +21,6 @@ deviceService:
   replicaCount: 1
   image: "registry.hub.docker.com/simike197/ds-proiect:backend-device"
   postgresName: "postgres-device"
-  authServiceDNS: "http://flask-auth-service.default.svc.cluster.local"
-  deviceServiceDNS: "http://flask-device-service.default.svc.cluster.local"
 
 
 apiService:

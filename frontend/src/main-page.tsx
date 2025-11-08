@@ -16,9 +16,10 @@ type HomeProps = {
   handleLogout: () => void;
   role:string;
   username:string;
+  currentUserAuthId: number | null;
 }
 
-export default function Home({handleLogout, role, username}: HomeProps) {
+export default function Home({handleLogout, role, username, currentUserAuthId}: HomeProps) {
 
   function Register() {
     const deviceform = useForm({
@@ -365,7 +366,7 @@ export default function Home({handleLogout, role, username}: HomeProps) {
           </TabsContent>
 
           <TabsContent value="users" className="mt-8">
-        <UserTable users={users} setUsers={setUsers} getUsers={getUsers} userForm={userForm}/>
+        <UserTable users={users} setUsers={setUsers} getUsers={getUsers} userForm={userForm} currentUserAuthId={currentUserAuthId}/>
           </TabsContent>
         </Tabs>
         

@@ -24,6 +24,8 @@ spec:
             value: {{ .Values.secretKey }}
           - name: "USER_SERVICE_URL"
             value: {{ .Values.authService.userServiceDNS }}
+          - name: "DEVICE_SERVICE_URL"
+            value: {{ .Values.authService.deviceServiceDNS }}
 
 
 ---

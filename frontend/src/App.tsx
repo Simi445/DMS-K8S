@@ -13,27 +13,58 @@ function App() {
   const [token, setToken] = useState(localStorage.getItem('token'))
   const [role, setRole] = useState('')
   const [username, setUername] = useState('')
+  const [currentUserAuthId, setCurrentUserAuthId] = useState<number | null>(null)
 
   useEffect(() => {
       let timer: number | undefined
       let decoded: JWTPayload | undefined;
       if (token) {
         decoded = jwtDecode<JWTPayload>(token);
-        setRole(decoded.role ?? '')
-        setUername(decoded.username ?? '')
-        if (decoded.exp && (decoded.exp * 1000) <= Date.now()) 
-        {
-            setToken(null)
-            localStorage.removeItem('token')
-            return;
-        }
-        
-        
-        if (decoded.exp) {
-          timer = setTimeout(() => {
-            setToken(null)
-            localStorage.removeItem('token')
-          }, (decoded.exp * 1000) - Date.now())
+        if (decoded) {
+          const decodedUsername = decoded.username ?? ''
+          setUername(decodedUsername)
+          
+          if (decoded.auth_id) {
+            fetch(`/users`, {
+              headers: {
+                "Authorization": `Bearer ${token}`
+              }
+            })
+              .then(response => response.json())
+              .then(data => {
+                const users = data.users || []
+                const user = users.find((u: any) => u.username === decodedUsername)
+                if (user) {
+                  setRole(user.role ?? '')
+                  setUername(user.username ?? '')
+                  setCurrentUserAuthId(user.auth_id ?? null)
+                } else {
+                  setRole('')
+                  setUername(decodedUsername)
+                  setCurrentUserAuthId(null)
+                }
+              })
+              .catch(error => {
+                console.error('Failed to fetch user details:', error)
+                setRole('')
+                setUername(decodedUsername)
+              })
+          }
+          
+          if (decoded.exp && (decoded.exp * 1000) <= Date.now()) 
+          {
+              setToken(null)
+              localStorage.removeItem('token')
+              return;
+          }
+          
+          
+          if (decoded.exp) {
+            timer = setTimeout(() => {
+              setToken(null)
+              localStorage.removeItem('token')
+            }, (decoded.exp * 1000) - Date.now())
+          }
         }
       }
       
@@ -66,7 +97,7 @@ function App() {
   return (
     <BrowserRouter>
     <Routes>
-        <Route path="/" element={token ? <Home handleLogout={handleLogout} role={role} username={username}/> : <Navigate to="/login" replace />} />
+        <Route path="/" element={token ? <Home handleLogout={handleLogout} role={role} username={username} currentUserAuthId={currentUserAuthId}/> : <Navigate to="/login" replace />} />
         <Route path="/register" element={!token ? <MainComponent><Register onTokenUpdate={handleTokenUpdate}/></MainComponent> : <Navigate to="/" replace />} />
         <Route path="/login" element={!token ?  <MainComponent><LoginForm onTokenUpdate={handleTokenUpdate} className={undefined}/> </MainComponent>: <Navigate to="/" replace />}/>
     </Routes>
