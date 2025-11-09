@@ -8,6 +8,7 @@ greenlet
 idna
 itsdangerous
 Jinja2
+pika
 MarkupSafe
 pika
 PyJWT

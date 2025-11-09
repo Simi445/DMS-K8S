@@ -1,5 +1,6 @@
 FROM python:3.9-alpine
-COPY . /app
+COPY ./backend-user/ /app/
+COPY ./shared/ /app/shared/
 WORKDIR /app
 RUN apk add --no-cache \
     bash \

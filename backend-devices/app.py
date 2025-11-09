@@ -8,10 +8,16 @@ from datetime import datetime, timedelta
 import pika
 import requests
 import psycopg2
+import sys
+sys.path.append('/app/shared')
+from rabbitmq_client import RabbitMQ
 
 app = Flask(__name__)
 app.config.from_pyfile('config.cfg')
 db = SQLAlchemy(app)
+
+rabbitmq_auth_consumer = RabbitMQ('device-service', 'user_events')  
+rabbitmq_user_consumer = RabbitMQ('device-service', 'user_crud_events')  
 
 class Device(db.Model):
     device_id = db.Column(db.Integer, primary_key=True)
@@ -24,6 +30,60 @@ class Device(db.Model):
 
 class Users(db.Model):
     auth_id = db.Column(db.Integer, primary_key=True)
+
+def handle_auth_message(message):
+    message_type = message.get('type')
+    data = message.get('data', {})
+    
+    if message_type == 'add_user':
+        with app.app_context():
+            try:
+                auth_id = data.get("auth_id")
+                
+                existing_user = db.session.execute(db.select(Users).filter_by(auth_id=auth_id)).scalar()
+                if existing_user:
+                    print(f"User with auth_id {auth_id} already exists in device service, skipping duplicate creation", flush=True)
+                    return
+                
+                user_record = Users(auth_id=auth_id)
+                db.session.add(user_record)
+                db.session.commit()
+                print(f"User added to device service via auth message: {auth_id}", flush=True)
+            except Exception as e:
+                db.session.rollback()
+                print(f"Failed to add user to device service via auth message: {str(e)}", flush=True)
+
+def handle_user_crud_message(message):
+    message_type = message.get('type')
+    data = message.get('data', {})
+    
+    with app.app_context():
+        if message_type == 'update_user_in_devices':
+            try:
+                auth_id = data.get("auth_id")
+                print(f"User updated in device service via user message: {auth_id}", flush=True)
+            except Exception as e:
+                print(f"Failed to update user in device service via user message: {str(e)}", flush=True)
+        
+        elif message_type == 'delete_device_user':
+            try:
+                auth_id = data.get("auth_id")
+                user_record = db.session.execute(db.select(Users).filter_by(auth_id=auth_id)).scalar()
+                if user_record:
+                    devices = Device.query.filter_by(auth_id=auth_id).all()
+                    for device in devices:
+                        db.session.delete(device)
+                    
+                    db.session.delete(user_record)
+                    db.session.commit()
+                    print(f"User and devices deleted from device service via user message: {auth_id}", flush=True)
+            except Exception as e:
+                db.session.rollback()
+                print(f"Failed to delete user from device service via user message: {str(e)}", flush=True)
+
+
+rabbitmq_auth_consumer.consumeMessage(handle_auth_message)
+rabbitmq_user_consumer.consumeMessage(handle_user_crud_message)
 
 @app.route('/add-user', methods=["POST"])
 def add_user():
@@ -67,7 +127,7 @@ def get_users():
             "status": device.status,
             "maxConsumption": device.consumption
         })
-        print(device_list[-1])
+        print(device_list[-1], flush=True)
     response = {'ok': 'Devices fetched!', 'devices': device_list}
     return app.response_class(
         response=json.dumps(response),
@@ -302,4 +362,4 @@ if __name__ == '__main__':
       with app.app_context(): 
           db.create_all()
        
-      app.run(debug=True, host='0.0.0.0', port='5001')
+      app.run(debug=False, host='0.0.0.0', port=5001)

@@ -315,7 +315,7 @@ export default function Home({handleLogout, role, username, currentUserAuthId}: 
                           </FormControl>
                           <SelectContent>
                             {users.map((user) => (
-                            <SelectItem key={user.user_id} value={`${user.user_id}`}>{user.username}</SelectItem>
+                            <SelectItem key={user.auth_id} value={`${user.auth_id}`}>{user.username}</SelectItem>
                         ))}
                           </SelectContent>
                         </Select>

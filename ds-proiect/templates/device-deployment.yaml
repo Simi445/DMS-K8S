@@ -19,6 +19,15 @@ spec:
       - name: {{ .Values.deviceService.appName }}
         image: {{ .Values.deviceService.image }}
         imagePullPolicy: Always
+        env:
+          - name: "RABBIT_HOST"
+            value: "rabbitmq-service.default.svc.cluster.local"
+          - name: "RABBIT_PORT"
+            value: "5672"
+          - name: "RABBIT_USER"
+            value: "admin"
+          - name: "RABBIT_PASS"
+            value: "admin123"
         
 ---
 apiVersion: "v1"

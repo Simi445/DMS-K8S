@@ -2,11 +2,11 @@ FROM node:22.20.0-alpine AS builder
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY ./frontend/package*.json ./
 
 RUN npm install --peer-legacy-deps
 
-COPY . .
+COPY ./frontend/ .
 
 
 FROM node:22.20.0-alpine
