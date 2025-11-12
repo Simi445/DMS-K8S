@@ -18,6 +18,7 @@ db = SQLAlchemy(app)
 
 rabbitmq_auth_consumer = RabbitMQ('device-service', 'user_events')  
 rabbitmq_user_consumer = RabbitMQ('device-service', 'user_crud_events')  
+rabbitmq_monitoring_producer = RabbitMQ('device-service', 'device_crud')  
 
 class Device(db.Model):
     device_id = db.Column(db.Integer, primary_key=True)
@@ -70,10 +71,6 @@ def handle_user_crud_message(message):
                 auth_id = data.get("auth_id")
                 user_record = db.session.execute(db.select(Users).filter_by(auth_id=auth_id)).scalar()
                 if user_record:
-                    devices = Device.query.filter_by(auth_id=auth_id).all()
-                    for device in devices:
-                        db.session.delete(device)
-                    
                     db.session.delete(user_record)
                     db.session.commit()
                     print(f"User and devices deleted from device service via user message: {auth_id}", flush=True)
@@ -203,6 +200,10 @@ def add_device():
             mimetype='application/json'
         )
     db.session.commit()
+    rabbitmq_monitoring_producer.sendMessage('add_device', {
+        'device_id': device.device_id,
+        'auth_id': device.auth_id,
+    })
     response = {"ok": "Device created"}
     return app.response_class(
             response=json.dumps(response),
@@ -295,6 +296,9 @@ def delete_device():
 
         db.session.delete(device)
         db.session.commit()
+        rabbitmq_monitoring_producer.sendMessage('delete_device', {
+            'device_id': device_id
+        })
 
         response = {"ok": "Device successfully deleted"}
         return app.response_class(

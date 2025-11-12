@@ -1,0 +1,48 @@
+apiVersion: "apps/v1"
+kind: "Deployment"
+metadata:
+  name: {{ .Values.simulatorService.appName }}
+  namespace: "default"
+  labels:
+    app: {{ .Values.simulatorService.appName }}
+spec:
+  replicas: {{ .Values.simulatorService.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.simulatorService.appName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.simulatorService.appName }}
+    spec:
+      containers:
+      - name: {{ .Values.simulatorService.appName }}
+        image: {{ .Values.simulatorService.image }}
+        imagePullPolicy: Always
+        env:
+          - name: "COLLECTION_RABBIT_HOST"
+            value: "collection-rabbitmq-service.default.svc.cluster.local"
+          - name: "RABBIT_PORT"
+            value: "5672"
+          - name: "RABBIT_USER"
+            value: "admin"
+          - name: "RABBIT_PASS"
+            value: "admin123"
+
+---
+apiVersion: "v1"
+kind: "Service"
+metadata:
+  name: "{{ .Values.simulatorService.appName }}-service"
+  namespace: "default"
+  labels:
+    app: {{ .Values.simulatorService.appName }}
+spec:
+  ports:
+  - protocol: "TCP"
+    port: 80
+    targetPort: 5001
+  selector:
+    app: {{ .Values.simulatorService.appName }}
+  type: "ClusterIP"
+  loadBalancerIP: ""

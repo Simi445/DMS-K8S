@@ -8,8 +8,8 @@ import json
 
 class RabbitMQ():
 
-    def __init__(self, consumerName, exchangeName):
-        self.host = os.environ.get('RABBIT_HOST', 'rabbitmq')
+    def __init__(self, consumerName, exchangeName, host=None):
+        self.host = host or os.environ.get('RABBIT_HOST', 'rabbitmq')
         self.port = int(os.environ.get('RABBIT_PORT', 5672))
         self.username = os.environ.get('RABBIT_USER', 'admin')
         self.password = os.environ.get('RABBIT_PASS', 'admin123')

@@ -85,6 +85,11 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      "/consumptions": {
+        target: "http://ingress-nginx-controller.ingress-nginx.svc.cluster.local:80", 
+        changeOrigin: true,
+        secure: false,
+      },
       "/user": {
         target: "http://ingress-nginx-controller.ingress-nginx.svc.cluster.local:80", 
         changeOrigin: true,
