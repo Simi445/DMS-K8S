@@ -13,7 +13,6 @@ spec:
       labels:
         app: {{ .Values.collectionRabbitmq.appName }}
     spec:
-      priorityClassName: collection-rabbitmq-priority
       containers:
       - name: {{ .Values.collectionRabbitmq.appName }}
         image: rabbitmq:3-management

@@ -30,8 +30,8 @@ class DeviceConsumption(db.Model):
 
 class DeviceMapping(db.Model):
     __tablename__ = 'deviceMapping'
-    mapping_key = db.Column(db.Integer, primary_key=True)
-    device_id = db.Column(db.Integer, primary_key=True)
+    mapping_key = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    device_id = db.Column(db.Integer, unique=True, nullable=False)
     auth_id = db.Column(db.Integer, nullable=False)
     def __repr__(self):
         return f"Device ID: {self.device_id}, Auth: {self.auth_id}"

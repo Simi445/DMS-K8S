@@ -49,21 +49,27 @@ class RabbitMQ():
 
     def sendMessage(self, messageType, body):
         print("Send function called", flush=True)
-        connection = self.connect_with_retry(self.host, self.port)
-        channel = connection.channel()
-        channel.exchange_declare(exchange=self.exchange, exchange_type='fanout')
-        
-        message = {
-            "type": messageType,
-            "data": body,
-            "sender": self.consumer
-        }
-        
-        serialized_body = json.dumps(message)
-        channel.basic_publish(exchange=self.exchange, routing_key='', body=serialized_body)
-        print(f"Published message {message} to exchange {self.exchange}", flush=True)
-        connection.close()
-        return f'Message sent: {messageType}'
+        try:
+            connection = self.connect_with_retry(self.host, self.port)
+            channel = connection.channel()
+            channel.exchange_declare(exchange=self.exchange, exchange_type='fanout')
+            
+            message = {
+                "type": messageType,
+                "data": body,
+                "sender": self.consumer
+            }
+            
+            serialized_body = json.dumps(message)
+            channel.basic_publish(exchange=self.exchange, routing_key='', body=serialized_body)
+            print(f"Published message to exchange {self.exchange}: {messageType}", flush=True)
+            connection.close()
+            return f'Message sent: {messageType}'
+        except Exception as e:
+            print(f"ERROR in sendMessage: {str(e)}", flush=True)
+            import traceback
+            traceback.print_exc()
+            raise
 
     def connect_with_retry(self, host, port, interval=5):
         while True:

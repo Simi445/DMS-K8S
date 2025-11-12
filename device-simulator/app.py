@@ -18,8 +18,7 @@ SIMULATION_INTERVAL = 5
 class ConsumptionSimulator:
     def __init__(self):
         self.devices = []
-        self.base_loads = {} 
-        self.last_update = {}
+        self.device_configs = {} 
         
     def fetch_devices(self):
         try:
@@ -31,32 +30,43 @@ class ConsumptionSimulator:
                 
                 for device in self.devices:
                     device_id = device['device_id']
-                    if device_id not in self.base_loads:
-                        self.base_loads[device_id] = random.uniform(0.5, 2.0)
-                        self.last_update[device_id] = datetime.now()
+                    max_consumption = float(device.get('maxConsumption', 100))
+                    
+                    self.device_configs[device_id] = {
+                        'max_consumption': max_consumption,
+                        'auth_id': device['auth_id'],
+                        'name': device.get('name', f'Device {device_id}')
+                    }
+                    
+                    print(f"Device {device_id} ({self.device_configs[device_id]['name']}): max consumption = {max_consumption} kWh", flush=True)
             else:
                 print(f"Failed to fetch devices: {response.status_code}", flush=True)
         except Exception as e:
             print(f"Error fetching devices: {str(e)}", flush=True)
     
     def get_hourly_multiplier(self, hour):
-        if 0 <= hour < 6: 
-            return 0.3  
-        elif 6 <= hour < 9:  
-            return 0.6 
-        elif 9 <= hour < 17:
-            return 0.8  
-        elif 17 <= hour < 21:  
-            return 1.2  
-        else:  
+        if 0 <= hour < 6:  
+            return 0.2  
+        elif 6 <= hour < 9: 
             return 0.5 
+        elif 9 <= hour < 17:  
+            return 0.7  
+        elif 17 <= hour < 21:  
+            return 1.0  
+        else:  
+            return 0.4 
     
-    def generate_consumption(self, device_id, base_load):
+    def generate_consumption(self, device_id, max_consumption):
         now = datetime.now()
         hour = now.hour
+        
         hourly_multiplier = self.get_hourly_multiplier(hour)
+        
         variation = random.uniform(0.8, 1.2)
-        consumption = base_load * hourly_multiplier * variation
+        
+        consumption = max_consumption * hourly_multiplier * variation
+        
+        consumption = min(consumption, max_consumption)
         consumption = max(0.1, consumption)
         
         return round(consumption, 3)
@@ -68,10 +78,15 @@ class ConsumptionSimulator:
                 
                 for device in self.devices:
                     device_id = device['device_id']
-                    auth_id = device['auth_id']
                     
-                    if device_id in self.base_loads:
-                        consumption = self.generate_consumption(device_id, self.base_loads[device_id])
+                    if device_id in self.device_configs:
+                        device_config = self.device_configs[device_id]
+                        auth_id = device_config['auth_id']
+                        max_consumption = device_config['max_consumption']
+                        
+                        consumption = self.generate_consumption(device_id, max_consumption)
+                        
+                        print(f"Device {device_id} ({device_config['name']}): {consumption} kWh (max: {max_consumption} kWh)", flush=True)
                         
                         message_data = {
                             'device_id': device_id,
@@ -80,8 +95,13 @@ class ConsumptionSimulator:
                             'timestamp': datetime.utcnow().isoformat()
                         }
                         
-                        rabbitmq_producer.sendMessage('consumption_reading', message_data)
-                        print(f"Sent consumption for device {device_id}: {consumption} kWh", flush=True)
+                        try:
+                            rabbitmq_producer.sendMessage('consumption_reading', message_data)
+                            print(f"Sent consumption data for device {device_id}", flush=True)
+                        except Exception as send_error:
+                            print(f"Failed to send consumption message: {str(send_error)}", flush=True)
+                    else:
+                        print(f"Device {device_id} configuration not loaded yet", flush=True)
                 
                 time.sleep(SIMULATION_INTERVAL)
                 

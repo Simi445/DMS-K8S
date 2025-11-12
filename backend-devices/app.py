@@ -108,10 +108,10 @@ def add_user():
 def get_users():
     devices = Device.query.all()
     if not devices:
-        response = {"ok": "No devices existent"}
+        response = {"ok": "No devices existent", "devices": []}
         return app.response_class(
             response=json.dumps(response),
-            status=204,
+            status=200,
             mimetype='application/json'
         )
     
@@ -128,7 +128,7 @@ def get_users():
     response = {'ok': 'Devices fetched!', 'devices': device_list}
     return app.response_class(
         response=json.dumps(response),
-        status=201,
+        status=200,
         mimetype='application/json'
     )
 

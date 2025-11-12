@@ -116,6 +116,9 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: "{{ .Values.monitoringService.postgresName }}-pv-claim"
+  labels:
+    app: "{{ .Values.monitoringService.postgresName }}"
+    service: monitoring
 spec:
   accessModes:
     - ReadWriteOnce
