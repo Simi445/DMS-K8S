@@ -4,24 +4,29 @@ authService:
   replicaCount: 1
   image: "registry.hub.docker.com/simike197/ds-proiect:backend-auth"
   postgresName: "postgres-auth"
-  userServiceDNS: "http://flask-user-service.default.svc.cluster.local"
 
 userService:
   appName: "flask-user"
   replicaCount: 1
   image: "registry.hub.docker.com/simike197/ds-proiect:backend-user"
   postgresName: "postgres-user"
-  authServiceDNS: "http://flask-auth-service.default.svc.cluster.local"
-  deviceServiceDNS: "http://flask-device-service.default.svc.cluster.local"
-
 
 deviceService:
   appName: "flask-device"
   replicaCount: 1
   image: "registry.hub.docker.com/simike197/ds-proiect:backend-device"
   postgresName: "postgres-device"
-  authServiceDNS: "http://flask-auth-service.default.svc.cluster.local"
-  deviceServiceDNS: "http://flask-device-service.default.svc.cluster.local"
+
+monitoringService:
+  appName: "flask-monitoring"
+  replicaCount: 1
+  image: "registry.hub.docker.com/simike197/ds-proiect:backend-monitoring"
+  postgresName: "postgres-mon"
+
+simulatorService:
+  appName: "device-simulator"
+  replicaCount: 1
+  image: "registry.hub.docker.com/simike197/ds-proiect:device-simulator"
 
 
 apiService:
@@ -39,5 +44,14 @@ swaggerService:
   appName: "swagger"
   replicaCount: 1
   image: "registry.hub.docker.com/simike197/ds-proiect:swagger"
+
+rabbitmq:
+  appName: "rabbitmq"
+  replicaCount: 1
+
+collectionRabbitmq:
+  appName: "collection-rabbitmq"
+  replicaCount: 1
+  image: "rabbitmq:3-management"
 
 secretKey: top123

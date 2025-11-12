@@ -40,6 +40,13 @@ spec:
               name: flask-user-service
               port:
                 number: 80
+        - path: /user
+          pathType: Prefix
+          backend:
+            service:
+              name: flask-user-service
+              port:
+                number: 80
         - path: /add-device
           pathType: Prefix
           backend:
@@ -66,5 +73,12 @@ spec:
           backend:
             service:
               name: flask-device-service
+              port:
+                number: 80
+        - path: /consumptions
+          pathType: Prefix
+          backend:
+            service:
+              name: flask-monitoring-service
               port:
                 number: 80

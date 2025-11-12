@@ -1,5 +1,5 @@
 FROM python:3.9-alpine
-COPY ./backend-auth/ /app/
+COPY ./backend-monitoring/ /app/
 COPY ./shared/ /app/shared/
 WORKDIR /app
 RUN apk add --no-cache \
@@ -11,5 +11,5 @@ RUN apk add --no-cache \
     postgresql-dev \
     && pip install --no-cache-dir -r requirements.txt \
     && apk del .build-deps
-EXPOSE 5000
+EXPOSE 5001
 CMD ["python", "app.py"]

@@ -6,10 +6,12 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "./ui/form"
 import { Input } from "./ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
-
+import { ConsumptionChart } from "./ui/consumption-chart"
 
 import type { Device } from "@/lib/types"
 import { useEffect, useState } from "react"
+import DatePicker from "react-datepicker"
+import "react-datepicker/dist/react-datepicker.css"
 
 type DeviceTableProps = {
     deviceForm: any,
@@ -24,10 +26,19 @@ type DeviceTableProps = {
 export function DeviceTable({ deviceForm, _users, devices, _setDevices, getDevices, username, role}: DeviceTableProps) {
 
     const [devicesById, setDevicesById] = useState<Device[]>([])
+    const [selectedDate, setSelectedDate] = useState<Date>(new Date())
+    const [chartData, setChartData] = useState<{hour: number, consumption: number}[]>([])
+    const [chartType, setChartType] = useState<'line' | 'bar'>('line')
+    const [showChartModal, setShowChartModal] = useState(false)
 
         const getDevicesById = async () => {
                 const user = _users.find((u) => u.username === username);
-                const userId = user.user_id;
+                if (!user || !user.auth_id) {
+                    console.log('User not found or auth_id missing:', user);
+                    setDevicesById([]);
+                    return;
+                }
+                const userId = user.auth_id;
 
                 try {
                         const response = await fetch(`/devices/${userId}`, {
@@ -53,6 +64,69 @@ export function DeviceTable({ deviceForm, _users, devices, _setDevices, getDevic
         getDevicesById();
     }, [username, _users]);
 
+    useEffect(() => {
+        fetchChartData();
+    }, [selectedDate, username, _users]);
+
+    const fetchChartData = async () => {
+        const user = _users.find((u) => u.username === username);
+        if (!user || !user.auth_id) {
+            console.log('User not found or auth_id missing:', user);
+            setChartData([]);
+            return;
+        }
+
+        const dateStr = selectedDate.toISOString().split('T')[0]; 
+
+        try {
+            const response = await fetch(`/consumptions?user_id=${user.auth_id}&date=${dateStr}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            if (!response.ok) {
+                console.error("Failed to fetch chart data:", response.status, response.statusText);
+                setChartData([]);
+                return;
+            }
+            const data = await response.json();
+            
+            const hourlyConsumption: { [hour: number]: number[] } = {};
+            
+            data?.consumptions?.forEach((consumption: any) => {
+                const timestamp = new Date(consumption.timestamp);
+                const hour = timestamp.getHours();
+                const consumptionValue = parseFloat(consumption.consumption);
+                
+                if (!hourlyConsumption[hour]) {
+                    hourlyConsumption[hour] = [];
+                }
+                hourlyConsumption[hour].push(consumptionValue);
+            });
+            
+            // Calculate average consumption per hour
+            const hourlyData = [];
+            for (let hour = 0; hour < 24; hour++) {
+                const consumptions = hourlyConsumption[hour] || [];
+                const averageConsumption = consumptions.length > 0 
+                    ? consumptions.reduce((sum, val) => sum + val, 0) / consumptions.length 
+                    : 0;
+                
+                hourlyData.push({
+                    hour,
+                    consumption: averageConsumption
+                });
+            }
+            
+            setChartData(hourlyData);
+        } catch (error) {
+            console.error("Error fetching chart data:", error);
+            setChartData([]);
+        }
+    };
+
 
     function DeviceEdit({ deviceId }: { deviceId: number }) {
         const currentDevice = devices.find((device) => device.device_id === deviceId);
@@ -63,7 +137,7 @@ export function DeviceTable({ deviceForm, _users, devices, _setDevices, getDevic
                     name: currentDevice.name,
                     maxConsumption: currentDevice.maxConsumption.toString(),
                     status: currentDevice.status,
-                    assignedTo: currentDevice.user_id?.toString() ?? 'no_user'
+                    assignedTo: currentDevice.auth_id?.toString() ?? 'no_user'
                 };
 
 
@@ -186,7 +260,7 @@ export function DeviceTable({ deviceForm, _users, devices, _setDevices, getDevic
                                         <SelectContent>
                                             <SelectItem value="no_user">Unassigned</SelectItem>
                                             {_users.map((user) => (
-                                                <SelectItem key={user.user_id} value={user.user_id.toString()}>
+                                                <SelectItem key={user.auth_id} value={user.auth_id.toString()}>
                                                     {user.username}
                                                 </SelectItem>
                                             ))}
@@ -246,10 +320,16 @@ function DeviceDelete({deviceId}: {deviceId: number})
     );
   }
     return (
+        <>
         <Card>
             <CardHeader>
                 <CardTitle>Devices</CardTitle>
                 <CardDescription>Manage all devices with their consumption limits and assignments</CardDescription>
+                <div className="flex gap-2 mt-4">
+                    <Button onClick={() => setShowChartModal(true)} variant="outline">
+                        View Consumption Chart
+                    </Button>
+                </div>
             </CardHeader>
             <CardContent>
                 <Table>
@@ -274,7 +354,7 @@ function DeviceDelete({deviceId}: {deviceId: number})
                                 <TableCell>
                                     <Badge variant={device.status === "active" ? "default" : "secondary"}>{device.status}</Badge>
                                 </TableCell>
-                                <TableCell className="text-muted-foreground">{(_users.find(user => String(user.user_id) === String(device.user_id))?.username) || "Unassigned"}</TableCell>
+                                <TableCell className="text-muted-foreground">{(_users.find(user => String(user.auth_id) === String(device.auth_id))?.username) || "Unassigned"}</TableCell>
                                 <TableCell>
                                     <div className="flex gap-2">
                                         <DeviceEdit deviceId={device.device_id} />
@@ -293,7 +373,7 @@ function DeviceDelete({deviceId}: {deviceId: number})
                                 <TableCell>
                                     <Badge variant={device.status === "active" ? "default" : "secondary"}>{device.status}</Badge>
                                 </TableCell>
-                                <TableCell className="text-muted-foreground">{(_users.find(user => String(user.user_id) === String(device.user_id))?.username) || "Unassigned"}</TableCell>
+                                <TableCell className="text-muted-foreground">{(_users.find(user => String(user.auth_id) === String(device.auth_id))?.username) || "Unassigned"}</TableCell>
                                 <TableCell>
                                     <div className="flex gap-2">
                                         <DeviceEdit deviceId={device.device_id} />
@@ -307,5 +387,55 @@ function DeviceDelete({deviceId}: {deviceId: number})
                 </Table>
             </CardContent>
         </Card>
+
+        <Dialog open={showChartModal} onOpenChange={setShowChartModal}>
+            <DialogContent className="max-w-4xl">
+                <DialogHeader>
+                    <DialogTitle>Energy Consumption Chart</DialogTitle>
+                    <DialogDescription>
+                        View your historical energy consumption for a selected day
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                    <div className="flex gap-4 items-center">
+                        <div>
+                            <label className="text-sm font-medium">Select Date:</label>
+                            <DatePicker
+                                selected={selectedDate}
+                                onChange={(date) => setSelectedDate(date || new Date())}
+                                dateFormat="yyyy-MM-dd"
+                                className="ml-2 p-2 border rounded"
+                            />
+                        </div>
+                        <div>
+                            <label className="text-sm font-medium">Chart Type:</label>
+                            <Select value={chartType} onValueChange={(value: 'line' | 'bar') => setChartType(value)}>
+                                <SelectTrigger className="ml-2 w-32">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="line">Line Chart</SelectItem>
+                                    <SelectItem value="bar">Bar Chart</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <Button onClick={fetchChartData} variant="outline">
+                            Load Chart
+                        </Button>
+                    </div>
+                    {chartData.length > 0 && (
+                        <div className="w-full">
+                            <ConsumptionChart data={chartData} chartType={chartType} />
+                        </div>
+                    )}
+                    {chartData.length === 0 && (
+                        <div className="text-center text-muted-foreground">
+                            No consumption data available for the selected date
+                        </div>
+                    )}
+                </div>
+            </DialogContent>
+        </Dialog>
+        </>
     )
 }

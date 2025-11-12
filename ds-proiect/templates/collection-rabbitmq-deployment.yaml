@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.collectionRabbitmq.appName }}
+  namespace: default
+spec:
+  replicas: {{ .Values.collectionRabbitmq.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.collectionRabbitmq.appName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.collectionRabbitmq.appName }}
+    spec:
+      containers:
+      - name: {{ .Values.collectionRabbitmq.appName }}
+        image: rabbitmq:3-management
+        ports:
+        - containerPort: 5672
+          name: amqp
+        - containerPort: 15672
+          name: management
+        env:
+        - name: RABBITMQ_DEFAULT_USER
+          value: "admin"
+        - name: RABBITMQ_DEFAULT_PASS
+          value: "admin123"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.collectionRabbitmq.appName }}-service
+  namespace: default
+spec:
+  selector:
+    app: {{ .Values.collectionRabbitmq.appName }}
+  ports:
+  - name: amqp
+    port: 5672
+    targetPort: 5672
+    protocol: TCP
+  - name: management
+    port: 15672
+    targetPort: 15672
+    protocol: TCP
+  type: ClusterIP

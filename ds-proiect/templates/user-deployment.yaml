@@ -22,10 +22,14 @@ spec:
         env:
           - name: "SECRET_KEY"
             value: {{ .Values.secretKey }}
-          - name: "DEVICE_SERVICE_URL"
-            value: {{ .Values.userService.deviceServiceDNS }}
-          - name: "AUTH_SERVICE_URL"
-            value: {{ .Values.userService.authServiceDNS }}
+          - name: "RABBIT_HOST"
+            value: "rabbitmq-service.default.svc.cluster.local"
+          - name: "RABBIT_PORT"
+            value: "5672"
+          - name: "RABBIT_USER"
+            value: "admin"
+          - name: "RABBIT_PASS"
+            value: "admin123"
 
 
 ---
@@ -113,6 +117,9 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: "{{ .Values.userService.postgresName }}-pv-claim"
+  labels:
+    app: "{{ .Values.userService.postgresName }}"
+    service: user
 spec:
   accessModes:
     - ReadWriteOnce

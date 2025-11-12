@@ -11,11 +11,11 @@ import { Link } from "react-router-dom"
 import { set } from "react-hook-form"
 
 
-export function UserTable({userForm, users  , setUsers, getUsers}) {
+export function UserTable({userForm, users  , setUsers, getUsers, currentUserAuthId}) {
 
   function UserEdit({userId}: {userId: number})
   {
-    const currentUser = users.find((user) => user.user_id === userId);
+    const currentUser = users.find((user) => user.auth_id === userId);
     const handleDialogOpen = () => {
       if (currentUser) {
         const userDataMap = {
@@ -33,7 +33,7 @@ export function UserTable({userForm, users  , setUsers, getUsers}) {
 
     const onSubmit = async (data: any) => {
       try {
-          const dataSend = {"user_id": userId, ...data}
+          const dataSend = {"auth_id": userId, ...data}
           const response = await fetch("/edit-user", {
             method: "PUT",
             headers: {
@@ -121,19 +121,6 @@ export function UserTable({userForm, users  , setUsers, getUsers}) {
                 </FormItem>
               )}
             />
-              <FormField
-                control={userForm.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel htmlFor="password">Password</FormLabel>
-                    <FormControl>
-                      <Input id="password" type="password" placeholder="Your password" {...field} required />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
               <div className="flex flex-col gap-3">
                 <Button type="submit" className="w-full">
                   Edit User
@@ -149,7 +136,7 @@ export function UserTable({userForm, users  , setUsers, getUsers}) {
   {  
     const handleDelete = async () => {
       try {
-          const dataSend = {"user_id": userId}
+          const dataSend = {"auth_id": userId}
           const response = await fetch("/delete-user", {
             method: "DELETE",
             headers: {
@@ -205,8 +192,8 @@ export function UserTable({userForm, users  , setUsers, getUsers}) {
           </TableHeader>
           <TableBody>
             {users.map((user) => (
-              <TableRow key={user.user_id}>
-                <TableCell className="font-mono text-sm">{user.user_id}</TableCell>
+              <TableRow key={user.auth_id}>
+                <TableCell className="font-mono text-sm">{user.auth_id}</TableCell>
                 <TableCell className="font-medium">{user.username}</TableCell>
                 <TableCell>
                   <Badge variant={user.role === "admin" ? "default" : "outline"}>{user.email}</Badge>
@@ -219,8 +206,12 @@ export function UserTable({userForm, users  , setUsers, getUsers}) {
                 </TableCell> */}
                 <TableCell>
                 <div className="flex gap-2">
-                  <UserEdit userId={user.user_id}/>
-                  <UserDelete userId={user.user_id}/>
+                  {user.auth_id !== currentUserAuthId && (
+                    <>
+                      <UserEdit userId={user.auth_id}/>
+                      <UserDelete userId={user.auth_id}/>
+                    </>
+                  )}
                 </div>
                 </TableCell>
               </TableRow>

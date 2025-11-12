@@ -8,14 +8,21 @@ from datetime import datetime, timedelta
 import pika
 import requests
 import psycopg2
+import sys
+sys.path.append('/app/shared')
+from rabbitmq_client import RabbitMQ
 
 app = Flask(__name__)
 app.config.from_pyfile('config.cfg')
 db = SQLAlchemy(app)
 
+rabbitmq_auth_consumer = RabbitMQ('device-service', 'user_events')  
+rabbitmq_user_consumer = RabbitMQ('device-service', 'user_crud_events')  
+rabbitmq_monitoring_producer = RabbitMQ('device-service', 'device_crud')  
+
 class Device(db.Model):
     device_id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
+    auth_id = db.Column(db.Integer, db.ForeignKey('users.auth_id'), nullable=False)
     name = db.Column(db.String(20), unique=False, nullable=False)
     status = db.Column(db.String(20), unique=False, nullable=False)
     consumption = db.Column(db.String(20), unique=False, nullable=False)
@@ -23,13 +30,63 @@ class Device(db.Model):
         return f"Device ID: {self.device_id}, Name: {self.name}, Consumption: {self.consumption}"
 
 class Users(db.Model):
-    user_id = db.Column(db.Integer, primary_key=True)
+    auth_id = db.Column(db.Integer, primary_key=True)
+
+def handle_auth_message(message):
+    message_type = message.get('type')
+    data = message.get('data', {})
+    
+    if message_type == 'add_user':
+        with app.app_context():
+            try:
+                auth_id = data.get("auth_id")
+                
+                existing_user = db.session.execute(db.select(Users).filter_by(auth_id=auth_id)).scalar()
+                if existing_user:
+                    print(f"User with auth_id {auth_id} already exists in device service, skipping duplicate creation", flush=True)
+                    return
+                
+                user_record = Users(auth_id=auth_id)
+                db.session.add(user_record)
+                db.session.commit()
+                print(f"User added to device service via auth message: {auth_id}", flush=True)
+            except Exception as e:
+                db.session.rollback()
+                print(f"Failed to add user to device service via auth message: {str(e)}", flush=True)
+
+def handle_user_crud_message(message):
+    message_type = message.get('type')
+    data = message.get('data', {})
+    
+    with app.app_context():
+        if message_type == 'update_user_in_devices':
+            try:
+                auth_id = data.get("auth_id")
+                print(f"User updated in device service via user message: {auth_id}", flush=True)
+            except Exception as e:
+                print(f"Failed to update user in device service via user message: {str(e)}", flush=True)
+        
+        elif message_type == 'delete_device_user':
+            try:
+                auth_id = data.get("auth_id")
+                user_record = db.session.execute(db.select(Users).filter_by(auth_id=auth_id)).scalar()
+                if user_record:
+                    db.session.delete(user_record)
+                    db.session.commit()
+                    print(f"User and devices deleted from device service via user message: {auth_id}", flush=True)
+            except Exception as e:
+                db.session.rollback()
+                print(f"Failed to delete user from device service via user message: {str(e)}", flush=True)
+
+
+rabbitmq_auth_consumer.consumeMessage(handle_auth_message)
+rabbitmq_user_consumer.consumeMessage(handle_user_crud_message)
 
 @app.route('/add-user', methods=["POST"])
 def add_user():
     data = request.get_json()
     try:
-        p = Users(user_id = data.get("user_id"))
+        p = Users(auth_id = data.get("auth_id"))
         db.session.add(p)
         db.session.commit()
         response = {'ok': 'User processed successfully'}
@@ -51,10 +108,10 @@ def add_user():
 def get_users():
     devices = Device.query.all()
     if not devices:
-        response = {"ok": "No devices existent"}
+        response = {"ok": "No devices existent", "devices": []}
         return app.response_class(
             response=json.dumps(response),
-            status=204,
+            status=200,
             mimetype='application/json'
         )
     
@@ -62,22 +119,22 @@ def get_users():
     for device in devices:
         device_list.append({
             "device_id": device.device_id,
-            "user_id": device.user_id,
+            "auth_id": device.auth_id,
             "name": device.name,
             "status": device.status,
             "maxConsumption": device.consumption
         })
-        print(device_list[-1])
+        print(device_list[-1], flush=True)
     response = {'ok': 'Devices fetched!', 'devices': device_list}
     return app.response_class(
         response=json.dumps(response),
-        status=201,
+        status=200,
         mimetype='application/json'
     )
 
-@app.route('/devices/<int:user_id>', methods=["GET"])
-def get_devices_by_user_id(user_id):
-    user = db.session.execute(db.select(Users).filter_by(user_id=user_id)).scalar()
+@app.route('/devices/<int:auth_id>', methods=["GET"])
+def get_devices_by_auth_id(auth_id):
+    user = db.session.execute(db.select(Users).filter_by(auth_id=auth_id)).scalar()
     if not user:
         response = {"error": "User does not exist in the device db!"}
         return app.response_class(
@@ -86,7 +143,7 @@ def get_devices_by_user_id(user_id):
             mimetype='application/json'
         )
     
-    devices = Device.query.filter_by(user_id=user_id).all()
+    devices = Device.query.filter_by(auth_id=auth_id).all()
     
     if not devices:
         response = {"ok": "No devices found for this user", "devices": []}
@@ -100,7 +157,7 @@ def get_devices_by_user_id(user_id):
     for device in devices:
         device_list.append({
             "device_id": device.device_id,
-            "user_id": device.user_id,
+            "auth_id": device.auth_id,
             "name": device.name,
             "status": device.status,
             "maxConsumption": device.consumption
@@ -122,7 +179,7 @@ def add_device():
     status = data.get('status')
     assigned_to = int(data.get('assignedTo'))
 
-    user = db.session.execute(db.select(Users).filter_by(user_id=assigned_to)).scalar()
+    user = db.session.execute(db.select(Users).filter_by(auth_id=assigned_to)).scalar()
     if not user:
         response = {"error": "User does not exist in the device db!"}
         return app.response_class(
@@ -132,7 +189,7 @@ def add_device():
             )
 
     try:
-        device = Device(name=name, consumption=str(consumption), status=status, user_id=user.user_id)
+        device = Device(name=name, consumption=str(consumption), status=status, auth_id=user.auth_id)
         db.session.add(device)
     except Exception as e:
         db.session.rollback()
@@ -143,6 +200,10 @@ def add_device():
             mimetype='application/json'
         )
     db.session.commit()
+    rabbitmq_monitoring_producer.sendMessage('add_device', {
+        'device_id': device.device_id,
+        'auth_id': device.auth_id,
+    })
     response = {"ok": "Device created"}
     return app.response_class(
             response=json.dumps(response),
@@ -177,12 +238,12 @@ def edit_device():
                 mimetype='application/json'
             )
 
-        device.name = name
-        device.consumption = str(consumption)
-        device.status = status
+        device.name = name if name is not None else device.name
+        device.consumption = str(consumption) if consumption is not None else device.consumption
+        device.status = status if status is not None else device.status
         
         if assigned_to and assigned_to != 'no_user':
-            user = db.session.execute(db.select(Users).filter_by(user_id=int(assigned_to))).scalar()
+            user = db.session.execute(db.select(Users).filter_by(auth_id=int(assigned_to))).scalar()
             if not user:
                 response = {"error": "Assigned user does not exist in the device db!"}
                 return app.response_class(
@@ -190,7 +251,7 @@ def edit_device():
                     status=400,
                     mimetype='application/json'
                 )
-            device.user_id = int(assigned_to)
+            device.auth_id = int(assigned_to)
 
         db.session.commit()
 
@@ -235,6 +296,9 @@ def delete_device():
 
         db.session.delete(device)
         db.session.commit()
+        rabbitmq_monitoring_producer.sendMessage('delete_device', {
+            'device_id': device_id
+        })
 
         response = {"ok": "Device successfully deleted"}
         return app.response_class(
@@ -252,8 +316,54 @@ def delete_device():
             mimetype='application/json'
         )
 
+@app.route('/remove-user', methods=["DELETE"])
+def remove_user():
+    data = request.get_json()
+    auth_id = data.get("auth_id")
+
+    if auth_id is None:
+        response = {"error": "auth_id is required"}
+        return app.response_class(
+            response=json.dumps(response),
+            status=400,
+            mimetype='application/json'
+        )
+
+    try:
+        unassigned_user = db.session.execute(db.select(Users).filter_by(auth_id=-1)).scalar()
+        if not unassigned_user:
+            unassigned_user = Users(auth_id=-1)
+            db.session.add(unassigned_user)
+            db.session.flush()
+
+        user = db.session.execute(db.select(Users).filter_by(auth_id=auth_id)).scalar()
+        if user:
+            db.session.delete(user)
+
+        devices = Device.query.filter_by(auth_id=auth_id).all()
+        for device in devices:
+            device.auth_id = -1  
+        
+        db.session.commit()
+
+        response = {"ok": f"User {auth_id} removed and devices unassigned"}
+        return app.response_class(
+            response=json.dumps(response),
+            status=200,
+            mimetype='application/json'
+        )
+
+    except Exception as e:
+        db.session.rollback()
+        response = {"error": f"Failed to remove user: {str(e)}"}
+        return app.response_class(
+            response=json.dumps(response),
+            status=500,
+            mimetype='application/json'
+        )
+
 if __name__ == '__main__':
       with app.app_context(): 
           db.create_all()
        
-      app.run(debug=True, host='0.0.0.0', port='5001')
+      app.run(debug=False, host='0.0.0.0', port=5001)

@@ -1,5 +1,5 @@
 export type User = {
-  user_id: number;
+  auth_id: number;
   username: string;
   email: string;
   role: string;
@@ -7,17 +7,20 @@ export type User = {
 
 export type Device = {
   device_id: number,
-  user_id: number;
+  auth_id: number;
   name: string;
   status: string;
   maxConsumption: number;
 };
 
+export type Consumption = {
+  device_id: number;
+  auth_id: number;
+  consumption: string;
+};
 
 export type JWTPayload = {
-    user_id?: number;
+    auth_id?: number;
     username?: string;
-    email?: string;
-    role?: string;
     exp?: number;
   };
