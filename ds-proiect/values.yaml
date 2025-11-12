@@ -21,7 +21,7 @@ monitoringService:
   appName: "flask-monitoring"
   replicaCount: 1
   image: "registry.hub.docker.com/simike197/ds-proiect:backend-monitoring"
-  postgresName: "postgres-monitoring"
+  postgresName: "postgres-mon"
 
 simulatorService:
   appName: "device-simulator"
