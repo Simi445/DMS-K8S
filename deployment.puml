@@ -15,49 +15,49 @@ title **DMS-K8S Microservices Architecture**\nKubernetes Deployment with Helm
 actor "External Users" as Users
 actor "Developers" as Devs
 
-component "Frontend\n(React + Vite)" as Frontend #lightgreen
+node "Frontend\n(React + Vite)" as Frontend #lightgreen
 note right of Frontend
   User interface for
   device management
   and monitoring
 end note
 
-component "API Gateway\n(JWT Verifier)" as Gateway #lightcoral
+node "API Gateway\n(JWT Verifier)" as Gateway #lightcoral
 note right of Gateway
   Validates JWT tokens
   Routes authenticated
   requests to services
 end note
 
-component "Auth Service\n(Flask + PostgreSQL)" as Auth #lightsalmon
+node "Auth Service\n(Flask + PostgreSQL)" as Auth #lightsalmon
 note right of Auth
   User registration
   Login & JWT generation
   Token validation
 end note
 
-component "User Service\n(Flask + PostgreSQL)" as User #lightsteelblue
+node "User Service\n(Flask + PostgreSQL)" as User #lightsteelblue
 note right of User
   CRUD operations
   for user entities
   Role management
 end note
 
-component "Device Service\n(Flask + PostgreSQL)" as Device #plum
+node "Device Service\n(Flask + PostgreSQL)" as Device #plum
 note right of Device
   Device lifecycle
   management
   User-device mapping
 end note
 
-component "Monitoring Service\n(Flask + PostgreSQL)" as Monitoring #lightblue
+node "Monitoring Service\n(Flask + PostgreSQL)" as Monitoring #lightblue
 note right of Monitoring
   Consumption data storage
   Real-time device tracking
   Query API by user/date
 end note
 
-component "Device Simulator\n(Python)" as Simulator #lightyellow
+node "Device Simulator\n(Python)" as Simulator #lightyellow
 note right of Simulator
   Generates realistic
   consumption data based
@@ -76,7 +76,7 @@ note bottom of RabbitMQ2
   message broker
 end note
 
-component "Swagger Docs\n(OpenAPI UI)" as Swagger #lightyellow
+node "Swagger Docs\n(OpenAPI UI)" as Swagger #lightyellow
 note left of Swagger
   Interactive API
   documentation
