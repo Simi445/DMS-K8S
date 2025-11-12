@@ -117,6 +117,9 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: "{{ .Values.userService.postgresName }}-pv-claim"
+  labels:
+    app: "{{ .Values.userService.postgresName }}"
+    service: user
 spec:
   accessModes:
     - ReadWriteOnce

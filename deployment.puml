@@ -1,0 +1,104 @@
+@startuml
+!theme plain
+skinparam backgroundColor #f8f9fa
+skinparam defaultFontSize 11
+skinparam component {
+  BackgroundColor white
+  BorderColor #333333
+  FontColor #000000
+}
+skinparam ArrowColor #555555
+skinparam ArrowFontColor #555555
+
+title **DMS-K8S Microservices Architecture**\nKubernetes Deployment with Helm
+
+actor "External Users" as Users
+actor "Developers" as Devs
+
+node "Frontend\n(React + Vite)" as Frontend #lightgreen
+note right of Frontend
+  User interface for
+  device management
+  and monitoring
+end note
+
+node "API Gateway\n(JWT Verifier)" as Gateway #lightcoral
+note right of Gateway
+  Validates JWT tokens
+  Routes authenticated
+  requests to services
+end note
+
+node "Auth Service\n(Flask + PostgreSQL)" as Auth #lightsalmon
+note right of Auth
+  User registration
+  Login & JWT generation
+  Token validation
+end note
+
+node "User Service\n(Flask + PostgreSQL)" as User #lightsteelblue
+note right of User
+  CRUD operations
+  for user entities
+  Role management
+end note
+
+node "Device Service\n(Flask + PostgreSQL)" as Device #plum
+note right of Device
+  Device lifecycle
+  management
+  User-device mapping
+end note
+
+node "Monitoring Service\n(Flask + PostgreSQL)" as Monitoring #lightblue
+note right of Monitoring
+  Consumption data storage
+  Real-time device tracking
+  Query API by user/date
+end note
+
+node "Device Simulator\n(Python)" as Simulator #lightyellow
+note right of Simulator
+  Generates realistic
+  consumption data based
+  on time and max capacity
+end note
+
+queue "RabbitMQ\n(User Events)" as RabbitMQ1 #wheat
+note bottom of RabbitMQ1
+  Event bus for user
+  and device CRUD events
+end note
+
+queue "RabbitMQ Collection\n(Consumption Data)" as RabbitMQ2 #wheat
+note bottom of RabbitMQ2
+  Consumption readings
+  message broker
+end note
+
+node "Swagger Docs\n(OpenAPI UI)" as Swagger #lightyellow
+note left of Swagger
+  Interactive API
+  documentation
+  Testing interface
+end note
+
+Users -(0)- Frontend
+Frontend -(0)- Gateway
+Gateway -(0)- Auth
+Gateway -(0)- User
+Gateway -(0)- Device
+Gateway -(0)- Monitoring
+
+Auth -(0)- RabbitMQ1 : publish
+User -(0)- RabbitMQ1 : publish
+Device -(0)- RabbitMQ1 : publish/consume
+Monitoring -(0)- RabbitMQ1 : consume
+
+Simulator -(0)- Device : fetch devices
+Simulator -(0)- RabbitMQ2 : publish
+RabbitMQ2 -(0)- Monitoring : consume
+
+Devs -(0)- Swagger
+
+@enduml

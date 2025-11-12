@@ -13,6 +13,11 @@ export type Device = {
   maxConsumption: number;
 };
 
+export type Consumption = {
+  device_id: number;
+  auth_id: number;
+  consumption: string;
+};
 
 export type JWTPayload = {
     auth_id?: number;

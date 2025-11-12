@@ -55,10 +55,13 @@ Follow these steps to set up and run the project on **Minikube**.
 
 ## Project Overview
 
-The **Device Management System (DMS)** is a distributed, microservices-based platform that allows authenticated users to monitor and manage energy metering devices.  
-This implementation extends the original **Docker-based assignment** into a **Kubernetes-native solution**, leveraging Helm, declarative manifests, and service orchestration for scalability and modularity.
+The **Device Management System (DMS)** is a distributed, microservices-based platform that allows authenticated users to monitor and manage energy metering devices with **real-time consumption tracking**.
 
-The system follows the **Request-Reply communication paradigm**, using a **reverse proxy and API gateway** to route and secure all requests between the frontend and backend microservices.
+This implementation provides a **Kubernetes-native solution**, leveraging Helm, declarative manifests, and service orchestration for scalability and modularity.
+
+The system combines **Request-Reply** and **Event-Driven** communication patterns:
+- **Synchronous**: RESTful APIs for user/device management
+- **Asynchronous**: RabbitMQ-based event streaming for real-time consumption data
 
 ---
 
@@ -69,7 +72,10 @@ The system follows the **Request-Reply communication paradigm**, using a **rever
 | **Authentication Service** | Handles user registration, login, JWT generation, and validation |
 | **User Management Service** | Provides CRUD operations for user entities and role assignments |
 | **Device Management Service** | Manages device lifecycle and maps devices to users |
+| **Monitoring Service** | Real-time consumption data collection, storage, and querying |
+| **Device Simulator** | Generates realistic consumption data based on device capacity and time patterns |
 | **Frontend (React)** | Offers a browser-based, role-aware interface for Admins and Clients |
+| **Swagger UI** | Interactive API documentation and testing interface |
 
 ---
 
@@ -78,10 +84,11 @@ The system follows the **Request-Reply communication paradigm**, using a **rever
 The system uses an **NGINX Ingress Controller** as both a **reverse proxy** and **API gateway**.  
 Key responsibilities include:
 - JWT token validation via the **JWT Verifier Service** (`auth-url` annotation)
-- Path-based routing (`/users`, `/devices`, `/login`, etc.)
+- Path-based routing (`/users`, `/devices`, `/consumptions`, `/login`, etc.)
 - Role-based access filtering and request forwarding
 
 ---
+
 
 ## Kubernetes Architecture
 
@@ -99,23 +106,46 @@ Core features include:
 ### Simplified Deployment Diagram
 
 ```
-+-------------------------------------------------------------+
-|                       Kubernetes Cluster                    |
-|                                                             |
-|  +------------------+       +----------------------------+  |
-|  | Frontend (React) | <----> | NGINX Ingress Controller  |  |
-|  +------------------+       +-------------+--------------+  |
-|                                    |                        |
-|        +---------------------------+-------------------+    |
-|        |                           |                   |    |
-|   +----v----+                +-----v------+       +-----v-----+
-|   | AuthSvc |                | UserSvc    |       | DeviceSvc |
-|   +----+----+                +-----+------+       +-----+-----+
-|        |                           |                    |     |
-|  +-----v----+               +------v-----+        +------v----+
-|  | Auth DB  |               | User DB    |        | Device DB |
-|  +----------+               +------------+        +-----------+
++---------------------------------------------------------------------------------+
+|                             Kubernetes Cluster                                  |
+|                                                                                 |
+|  +------------------+       +----------------------------+       +------------+  |
+|  | Frontend (React) | <----> | NGINX Ingress Controller  | <----> | Swagger UI |  |
+|  +------------------+       +-------------+--------------+       +------------+  |
+|                                    |                                           |
+|        +---------------------------+-------------------+                        |
+|        |                           |                   |                        |
+|   +----v----+                +-----v------+       +-----v-----+                 |
+|   | AuthSvc |                | UserSvc    |       | DeviceSvc |                 |
+|   +----+----+                +-----+------+       +-----+-----+                 |
+|        |                           |                    |                       |
+|  +-----v----+               +------v-----+        +------v----+                 |
+|  | Auth DB  |               | User DB    |        | Device DB |                 |
+|  +----------+               +------------+        +-----------+                 |
+|                                                                                 |
+|  +------------------+       +------------------+       +------------------+     |
+|  | Device Simulator | ----> | RabbitMQ (Events)| ----> | Monitoring Service|     |
+|  +------------------+       +------------------+       +-----+------------+     |
+|                                                     |                   |       |
+|                                                     |             +-----v-----+ |
+|                                                     |             | Monitor DB| |
+|                                                     |             +-----------+ |
+|                                                     |                         |
+|                                                     +-------------------------+
+|                                                               |
+|                                                       +-------v-------+
+|                                                       | RabbitMQ (Data)|
+|                                                       +---------------+
 ```
+
+**Legend:**
+- **Frontend**: React-based user interface
+- **API Gateway**: NGINX Ingress with JWT validation
+- **Auth/User/Device Services**: Flask microservices with PostgreSQL
+- **Monitoring Service**: Consumption data storage and API
+- **Device Simulator**: Generates realistic consumption data
+- **RabbitMQ**: Message brokers for event-driven communication
+- **Swagger UI**: API documentation and testing interface
 
 ---
 
@@ -126,6 +156,6 @@ Core features include:
 - **Docker** for containerization  
 - **PostgreSQL** for data persistence  
 - **React** for frontend  
-- **Flask / Spring Boot** for backend microservices  
+- **Flask** for backend microservices  
 - **NGINX Ingress Controller** for routing and API gateway  
 - **JWT** for authentication and authorization  

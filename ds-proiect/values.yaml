@@ -17,6 +17,17 @@ deviceService:
   image: "registry.hub.docker.com/simike197/ds-proiect:backend-device"
   postgresName: "postgres-device"
 
+monitoringService:
+  appName: "flask-monitoring"
+  replicaCount: 1
+  image: "registry.hub.docker.com/simike197/ds-proiect:backend-monitoring"
+  postgresName: "postgres-mon"
+
+simulatorService:
+  appName: "device-simulator"
+  replicaCount: 1
+  image: "registry.hub.docker.com/simike197/ds-proiect:device-simulator"
+
 
 apiService:
   appName: "jwt-verifier"
@@ -36,6 +47,10 @@ swaggerService:
 
 rabbitmq:
   appName: "rabbitmq"
+  replicaCount: 1
+
+collectionRabbitmq:
+  appName: "collection-rabbitmq"
   replicaCount: 1
   image: "rabbitmq:3-management"
 

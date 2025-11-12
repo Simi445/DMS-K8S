@@ -1,10 +1,21 @@
 openapi: 3.0.0
 info:
-  title: API Gateway Proxy
-  description: Swagger documentation for the API Gateway proxy paths.
-  version: 1.0.0
+  title: Device Management System API
+  description: |
+    Comprehensive API documentation for the Device Management System (DMS).
+    A distributed microservices platform for managing energy metering devices with real-time consumption monitoring.
+    
+    **Architecture:**
+    - Authentication Service: User registration, login, JWT management
+    - User Management Service: CRUD operations for users
+    - Device Management Service: Device lifecycle and user mapping
+    - Monitoring Service: Real-time consumption data collection and analysis
+    - Device Simulator: Generates realistic consumption data
+    
+  version: 2.0.0
 servers:
   - url: http://ingress-nginx-controller.ingress-nginx.svc.cluster.local:80
+    description: Kubernetes Ingress Gateway
 paths:
   /register:
     post:
@@ -258,3 +269,100 @@ paths:
           description: Bad request.
         '500':
           description: Internal server error.
+  /consumptions:
+    get:
+      summary: Get consumption data
+      description: Retrieve energy consumption readings for devices with optional filtering by user and date.
+      parameters:
+        - name: user_id
+          in: query
+          required: false
+          description: Filter consumption data by user ID (auth_id).
+          schema:
+            type: integer
+        - name: date
+          in: query
+          required: false
+          description: Filter consumption data by specific date (format YYYY-MM-DD).
+          schema:
+            type: string
+            format: date
+            example: "2025-11-12"
+      responses:
+        '200':
+          description: List of consumption readings.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  consumptions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        device_id:
+                          type: integer
+                          description: The ID of the device
+                        auth_id:
+                          type: integer
+                          description: The ID of the authenticated user
+                        consumption:
+                          type: string
+                          description: Energy consumption in kWh
+                        timestamp:
+                          type: string
+                          format: date-time
+                          description: Timestamp of the reading
+        '400':
+          description: Bad request (invalid date format).
+        '500':
+          description: Internal server error.
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [admin, client]
+    Device:
+      type: object
+      properties:
+        device_id:
+          type: integer
+        auth_id:
+          type: integer
+        name:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive]
+        consumption:
+          type: number
+          description: Maximum consumption capacity in kWh
+    ConsumptionReading:
+      type: object
+      properties:
+        device_id:
+          type: integer
+        auth_id:
+          type: integer
+        consumption:
+          type: number
+          description: Current consumption in kWh
+        timestamp:
+          type: string
+          format: date-time
