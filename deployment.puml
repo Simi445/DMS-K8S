@@ -15,68 +15,68 @@ title **DMS-K8S Microservices Architecture**\nKubernetes Deployment with Helm
 actor "External Users" as Users
 actor "Developers" as Devs
 
-node "Frontend\n(React + Vite)" as Frontend #lightgreen
+node "Frontend\n(React + Vite)\nPort: 5173" as Frontend #lightgreen
 note right of Frontend
   User interface for
   device management
   and monitoring
 end note
 
-node "API Gateway\n(JWT Verifier)" as Gateway #lightcoral
+node "API Gateway\n(JWT Verifier)\nPort: 5003" as Gateway #lightcoral
 note right of Gateway
   Validates JWT tokens
   Routes authenticated
   requests to services
 end note
 
-node "Auth Service\n(Flask + PostgreSQL)" as Auth #lightsalmon
+node "Auth Service\n(Flask + PostgreSQL)\nPort: 5000" as Auth #lightsalmon
 note right of Auth
   User registration
   Login & JWT generation
   Token validation
 end note
 
-node "User Service\n(Flask + PostgreSQL)" as User #lightsteelblue
+node "User Service\n(Flask + PostgreSQL)\nPort: 5002" as User #lightsteelblue
 note right of User
   CRUD operations
   for user entities
   Role management
 end note
 
-node "Device Service\n(Flask + PostgreSQL)" as Device #plum
+node "Device Service\n(Flask + PostgreSQL)\nPort: 5001" as Device #plum
 note right of Device
   Device lifecycle
   management
   User-device mapping
 end note
 
-node "Monitoring Service\n(Flask + PostgreSQL)" as Monitoring #lightblue
+node "Monitoring Service\n(Flask + PostgreSQL)\nPort: 5001" as Monitoring #lightblue
 note right of Monitoring
   Consumption data storage
   Real-time device tracking
   Query API by user/date
 end note
 
-node "Device Simulator\n(Python)" as Simulator #lightyellow
+node "Device Simulator\n(Python)\nPort: 5001" as Simulator #lightyellow
 note right of Simulator
   Generates realistic
   consumption data based
   on time and max capacity
 end note
 
-queue "RabbitMQ\n(User Events)" as RabbitMQ1 #wheat
+queue "RabbitMQ\n(User Events)\nPort: 5672" as RabbitMQ1 #wheat
 note bottom of RabbitMQ1
   Event bus for user
   and device CRUD events
 end note
 
-queue "RabbitMQ Collection\n(Consumption Data)" as RabbitMQ2 #wheat
+queue "RabbitMQ Collection\n(Consumption Data)\nPort: 5672" as RabbitMQ2 #wheat
 note bottom of RabbitMQ2
   Consumption readings
   message broker
 end note
 
-node "Swagger Docs\n(OpenAPI UI)" as Swagger #lightyellow
+node "Swagger Docs\n(OpenAPI UI)\nPort: 5015" as Swagger #lightyellow
 note left of Swagger
   Interactive API
   documentation
