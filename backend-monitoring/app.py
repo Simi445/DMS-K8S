@@ -17,7 +17,9 @@ app.config.from_pyfile('config.cfg')
 db = SQLAlchemy(app)
 
 rabbitmq_monitoring_consumer = RabbitMQ('monitoring-service', 'device_crud')  
-rabbitmq_consumption_consumer = RabbitMQ('monitoring-service', 'consumption_data', os.environ.get('COLLECTION_RABBIT_HOST', 'collection-rabbitmq-service.default.svc.cluster.local'))  
+pod_name = os.environ.get('HOSTNAME', 'flask-monitoring-0')
+replica_id = int(pod_name.split('-')[-1]) + 1
+rabbitmq_consumption_consumer = RabbitMQ('monitoring-service', 'monitoring_ingest', os.environ.get('COLLECTION_RABBIT_HOST', 'collection-rabbitmq-service.default.svc.cluster.local'), exchange_type='direct', routing_key=f'replica{replica_id}')  
 
 class DeviceConsumption(db.Model):
     __tablename__ = 'deviceConsumption'

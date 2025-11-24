@@ -8,13 +8,15 @@ import json
 
 class RabbitMQ():
 
-    def __init__(self, consumerName, exchangeName, host=None):
+    def __init__(self, consumerName, exchangeName, host=None, exchange_type='fanout', routing_key=''):
         self.host = host or os.environ.get('RABBIT_HOST', 'rabbitmq')
         self.port = int(os.environ.get('RABBIT_PORT', 5672))
         self.username = os.environ.get('RABBIT_USER', 'admin')
         self.password = os.environ.get('RABBIT_PASS', 'admin123')
         self.consumer = consumerName
         self.exchange = exchangeName
+        self.exchange_type = exchange_type
+        self.routing_key = routing_key
 
     def consumeMessage(self, message_handler=None):
         def callback(ch, method, properties, body):
@@ -36,12 +38,12 @@ class RabbitMQ():
             print(f"Connected to RabbitMQ at {self.host}:{self.port}", flush=True)
 
             channel = connection.channel()
-            channel.exchange_declare(exchange=self.exchange, exchange_type='fanout')
+            channel.exchange_declare(exchange=self.exchange, exchange_type=self.exchange_type)
             result = channel.queue_declare(queue='', exclusive=True)
             queue_name = result.method.queue
-            channel.queue_bind(exchange=self.exchange, queue=queue_name)
+            channel.queue_bind(exchange=self.exchange, queue=queue_name, routing_key=self.routing_key)
 
-            print(f"Bound to queue {queue_name}, waiting for messages...", flush=True)
+            print(f"Bound to queue {queue_name} with routing_key {self.routing_key}, waiting for messages...", flush=True)
 
             channel.basic_consume(queue=queue_name, on_message_callback=callback, auto_ack=False)
             channel.start_consuming()
@@ -52,7 +54,7 @@ class RabbitMQ():
         try:
             connection = self.connect_with_retry(self.host, self.port)
             channel = connection.channel()
-            channel.exchange_declare(exchange=self.exchange, exchange_type='fanout')
+            channel.exchange_declare(exchange=self.exchange, exchange_type=self.exchange_type)
             
             message = {
                 "type": messageType,
@@ -61,8 +63,8 @@ class RabbitMQ():
             }
             
             serialized_body = json.dumps(message)
-            channel.basic_publish(exchange=self.exchange, routing_key='', body=serialized_body)
-            print(f"Published message to exchange {self.exchange}: {messageType}", flush=True)
+            channel.basic_publish(exchange=self.exchange, routing_key=self.routing_key, body=serialized_body)
+            print(f"Published message to exchange {self.exchange} with routing_key {self.routing_key}: {messageType}", flush=True)
             connection.close()
             return f'Message sent: {messageType}'
         except Exception as e:
