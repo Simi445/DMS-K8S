@@ -2,10 +2,21 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: backend-ingress-public
+  annotations:
+    nginx.ingress.kubernetes.io/websocket-services: "flask-messages-service"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
 spec:
   rules:
     - http:
         paths:
+        - path: /socket.io
+          pathType: Prefix
+          backend:
+            service:
+              name: flask-messages-service
+              port:
+                number: 5005
         - path: /register
           pathType: Prefix
           backend:

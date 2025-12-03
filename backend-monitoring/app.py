@@ -19,7 +19,8 @@ db = SQLAlchemy(app)
 rabbitmq_monitoring_consumer = RabbitMQ('monitoring-service', 'device_crud')  
 pod_name = os.environ.get('HOSTNAME', 'flask-monitoring-0')
 replica_id = int(pod_name.split('-')[-1]) + 1
-rabbitmq_consumption_consumer = RabbitMQ('monitoring-service', 'monitoring_ingest', os.environ.get('COLLECTION_RABBIT_HOST', 'collection-rabbitmq-service.default.svc.cluster.local'), exchange_type='direct', routing_key=f'replica{replica_id}')  
+rabbitmq_consumption_consumer = RabbitMQ('monitoring-service', 'monitoring_ingest', os.environ.get('COLLECTION_RABBIT_HOST', 'collection-rabbitmq-service.default.svc.cluster.local'), exchange_type='direct', routing_key=f'replica{replica_id}')
+rabbitmq_alert_producer = RabbitMQ('monitoring-service', 'overconsumption_alerts')  
 
 class DeviceConsumption(db.Model):
     __tablename__ = 'deviceConsumption'
@@ -95,6 +96,32 @@ def handle_consumption_message(message):
                         timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
                     else:
                         timestamp = datetime.utcnow()
+                    
+                    try:
+                        device_response = requests.get(
+                            f"http://flask-device-service.default.svc.cluster.local/devices",
+                            timeout=5
+                        )
+                        if device_response.status_code == 200:
+                            devices = device_response.json().get('devices', [])
+                            device_info = next((d for d in devices if d['device_id'] == device_id), None)
+                            
+                            if device_info:
+                                max_consumption = float(device_info.get('maxConsumption', 0))
+                                
+                                if float(consumption) > max_consumption:
+                                    print(f"⚠️  OVERCONSUMPTION DETECTED: Device {device_id}, Consumption: {consumption} kWh, Max: {max_consumption} kWh", flush=True)
+                                    
+                                    rabbitmq_alert_producer.sendMessage('overconsumption_alert', {
+                                        'user_id': str(auth_id),
+                                        'device_id': device_id,
+                                        'consumption': float(consumption),
+                                        'threshold': max_consumption,
+                                        'timestamp': timestamp.isoformat()
+                                    })
+                                    print(f"Overconsumption alert sent for device {device_id}", flush=True)
+                    except Exception as e:
+                        print(f"Error fetching device info or sending alert: {str(e)}", flush=True)
                     
                     device_consumption = DeviceConsumption(
                         mapping_id=mapping.mapping_key,

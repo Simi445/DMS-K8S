@@ -100,6 +100,27 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      "/admins": {
+        target: "http://ingress-nginx-controller.ingress-nginx.svc.cluster.local:80", 
+        changeOrigin: true,
+        secure: false,
+      },
+      "/chat": {
+        target: "http://ingress-nginx-controller.ingress-nginx.svc.cluster.local:80", 
+        changeOrigin: true,
+        secure: false,
+      },
+      "/chat/*": {
+        target: "http://ingress-nginx-controller.ingress-nginx.svc.cluster.local:80", 
+        changeOrigin: true,
+        secure: false,
+      },
+      "/socket.io": {
+        target: "http://flask-messages-service.default.svc.cluster.local:5005", 
+        changeOrigin: true,
+        secure: false,
+        ws: true,
+      },
     }
   }
 })

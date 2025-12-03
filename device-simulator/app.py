@@ -66,7 +66,14 @@ class ConsumptionSimulator:
         
         consumption = max_consumption * hourly_multiplier * variation
         
-        consumption = min(consumption, max_consumption)
+        # 10% chance to simulate overconsumption (exceeding max)
+        if random.random() < 0.1:
+            overconsumption_multiplier = random.uniform(1.1, 1.5)
+            consumption = max_consumption * overconsumption_multiplier
+            print(f"⚠️  OVERCONSUMPTION SIMULATED for device {device_id}: {consumption:.3f} kWh (max: {max_consumption} kWh)", flush=True)
+        else:
+            consumption = min(consumption, max_consumption)
+        
         consumption = max(0.1, consumption)
         
         return round(consumption, 3)

@@ -28,6 +28,12 @@ simulatorService:
   replicaCount: 1
   image: "registry.hub.docker.com/simike197/ds-proiect:device-simulator"
 
+messageService:
+  appName: "flask-messages"
+  replicaCount: 1
+  image: "registry.hub.docker.com/simike197/ds-proiect:backend-messages"
+  storageSize: "1Gi"
+
 loadBalancerService:
   appName: "load-balancer"
   replicaCount: 1

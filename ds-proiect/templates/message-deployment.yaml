@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.messageService.appName }}
+  namespace: default
+  labels:
+    app: {{ .Values.messageService.appName }}
+spec:
+  replicas: {{ .Values.messageService.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.messageService.appName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.messageService.appName }}
+    spec:
+      containers:
+      - name: {{ .Values.messageService.appName }}
+        image: {{ .Values.messageService.image }}
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5005
+          name: http
+        - containerPort: 8080
+          name: websocket
+        env:
+          - name: "SECRET_KEY"
+            value: {{ .Values.secretKey }}
+          - name: "HF_TOKEN"
+            valueFrom:
+              secretKeyRef:
+                name: hf-token-secret
+                key: token
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.messageService.appName }}-service
+  namespace: default
+  labels:
+    app: {{ .Values.messageService.appName }}
+spec:
+  selector:
+    app: {{ .Values.messageService.appName }}
+  ports:
+  - name: http
+    port: 5005
+    targetPort: 5005
+    protocol: TCP
+  - name: websocket
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+  type: ClusterIP
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.messageService.appName }}-pvc
+  namespace: default
+  labels:
+    app: {{ .Values.messageService.appName }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.messageService.storageSize }}
