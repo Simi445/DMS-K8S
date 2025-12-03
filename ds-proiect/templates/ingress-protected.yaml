@@ -15,6 +15,9 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/auth-url: "http://jwt-verifier-service.default.svc.cluster.local/verify"
     nginx.ingress.kubernetes.io/auth-proxy-set-headers: "default/auth-headers"
+    nginx.ingress.kubernetes.io/websocket-services: "flask-messages-service"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
 spec:
   rules:
     - http:
@@ -41,6 +44,13 @@ spec:
               port:
                 number: 80
         - path: /user
+          pathType: Prefix
+          backend:
+            service:
+              name: flask-user-service
+              port:
+                number: 80
+        - path: /admins
           pathType: Prefix
           backend:
             service:
@@ -82,3 +92,10 @@ spec:
               name: flask-monitoring-service
               port:
                 number: 80
+        - path: /chat
+          pathType: Prefix
+          backend:
+            service:
+              name: flask-messages-service
+              port:
+                number: 5005

@@ -1,5 +1,5 @@
 apiVersion: "apps/v1"
-kind: "Deployment"
+kind: "StatefulSet"
 metadata:
   name: {{ .Values.monitoringService.appName }}
   namespace: "default"
@@ -7,6 +7,7 @@ metadata:
     app: {{ .Values.monitoringService.appName }}
 spec:
   replicas: {{ .Values.monitoringService.replicaCount }}
+  serviceName: {{ .Values.monitoringService.appName }}
   selector:
     matchLabels:
       app: {{ .Values.monitoringService.appName }}
@@ -30,6 +31,10 @@ spec:
             value: "admin"
           - name: "RABBIT_PASS"
             value: "admin123"
+          - name: "REPLICA_ID"
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
         
 ---
 apiVersion: "v1"

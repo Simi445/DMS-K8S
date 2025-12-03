@@ -32,17 +32,30 @@ Follow these steps to set up and run the project on **Minikube**.
    minikube addons enable ingress
    ```
 
-3. **Deploy the Helm Chart**
+3. **Configure HuggingFace Token (Required for AI Chat)**
+   
+   Before deploying, update the HuggingFace API token in `ds-proiect/templates/hf-secret.yaml`:
+   ```yaml
+   data:
+     token: <your-base64-encoded-huggingface-token-here>
+   ```
+   
+   To encode your token:
+   ```bash
+   echo -n "your-huggingface-token" | base64
+   ```
+
+4. **Deploy the Helm Chart**
    ```bash
    helm install proiect ./ds-proiect
    ```
 
-4. **Verify the Deployment**
+5. **Verify the Deployment**
    ```bash
    kubectl get all
    ```
 
-5. **Access the Application**
+6. **Access the Application**
    - Retrieve the Minikube IP:
      ```bash
      minikube ip
@@ -74,6 +87,7 @@ The system combines **Request-Reply** and **Event-Driven** communication pattern
 | **Device Management Service** | Manages device lifecycle and maps devices to users |
 | **Monitoring Service** | Real-time consumption data collection, storage, and querying |
 | **Device Simulator** | Generates realistic consumption data based on device capacity and time patterns |
+| **Message Service** | Customer support chat system with rule-based and AI-driven responses |
 | **Frontend (React)** | Offers a browser-based, role-aware interface for Admins and Clients |
 | **Swagger UI** | Interactive API documentation and testing interface |
 
@@ -144,8 +158,43 @@ Core features include:
 - **Auth/User/Device Services**: Flask microservices with PostgreSQL
 - **Monitoring Service**: Consumption data storage and API
 - **Device Simulator**: Generates realistic consumption data
+- **Message Service**: Real-time chat support with AI assistance
 - **RabbitMQ**: Message brokers for event-driven communication
 - **Swagger UI**: API documentation and testing interface
+
+---
+
+## Customer Support Chat System
+
+The system includes a comprehensive **real-time chat support system** with the following features:
+
+### **Core Features**
+- **Real-time Messaging**: WebSocket-based bidirectional communication
+- **Admin Selection**: Users can choose from available administrators
+- **Session Management**: Persistent chat sessions with message history
+- **Typing Indicators**: Real-time typing status notifications
+- **Read Receipts**: Message delivery confirmation
+
+### **Intelligent Responses**
+- **Rule-based Responses**: Automatic replies for common questions (help, billing, devices, etc.)
+- **AI-Powered Support**: Integration with HuggingFace API for advanced query handling
+- **Fallback System**: Rules first, AI as backup, human admin as final resort
+
+### **System Notifications**
+- **Overconsumption Alerts**: Automatic notifications when devices exceed thresholds
+- **Real-time Delivery**: Instant alerts through WebSocket connections
+
+### **Technical Implementation**
+- **WebSocket Service**: Socket.IO for real-time communication
+- **Message Persistence**: SQLite/PostgreSQL database for chat history
+- **AI Integration**: HuggingFace API with OpenAI-compatible interface
+- **Session Tracking**: Chat session lifecycle management
+
+### **API Endpoints**
+- `POST /chat/api/sessions` - Create chat session
+- `GET /chat/api/sessions/{id}/messages` - Get message history
+- `WebSocket /socket.io/` - Real-time messaging
+- `POST /chat/api/notify/overconsumption` - Send system alerts
 
 ---
 

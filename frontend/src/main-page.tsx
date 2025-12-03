@@ -1,5 +1,8 @@
 import { DeviceTable } from "@/components/device-table"
 import { UserTable } from "@/components/user-table"
+import { ChatWindow } from "@/components/chat-window"
+import { AdminChat } from "@/components/admin-chat"
+import { OverconsumptionAlertListener } from "@/components/overconsumption-alert"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { useEffect, useState } from "react"
@@ -45,6 +48,7 @@ export default function Home({handleLogout, role, username, currentUserAuthId}: 
   const [error, setError] = useState('');
   const [users, setUsers] = useState<UserType[]>([])
   const [devices, setDevices] = useState<DeviceType[]>([])
+  const [showChat, setShowChat] = useState(false)
 
   useEffect(() => {
       let timer: number | undefined
@@ -335,6 +339,11 @@ export default function Home({handleLogout, role, username, currentUserAuthId}: 
   
   return (
     <div className="min-h-screen relative">
+      {/* Overconsumption Alert Listener */}
+      {currentUserAuthId && (
+        <OverconsumptionAlertListener userId={currentUserAuthId.toString()} />
+      )}
+      
       <Button 
         onClick={handleLogout}
         variant="outline"
@@ -356,9 +365,10 @@ export default function Home({handleLogout, role, username, currentUserAuthId}: 
           )}
         </div>
         <Tabs defaultValue="devices" className="w-full" onValueChange={(val: any) => setDeviceOpen(val === 'devices')}>
-          {(role === "admin") ? (<TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
+          {(role === "admin") ? (<TabsList className="grid w-full max-w-md mx-auto grid-cols-3">
           <TabsTrigger value="devices">Devices</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
+          <TabsTrigger value="chats">Chats</TabsTrigger>
           </TabsList>) : null}
 
           <TabsContent value="devices" className="mt-8">
@@ -368,9 +378,35 @@ export default function Home({handleLogout, role, username, currentUserAuthId}: 
           <TabsContent value="users" className="mt-8">
         <UserTable users={users} setUsers={setUsers} getUsers={getUsers} userForm={userForm} currentUserAuthId={currentUserAuthId}/>
           </TabsContent>
+
+          <TabsContent value="chats" className="mt-8">
+            {currentUserAuthId && (
+              <AdminChat adminId={currentUserAuthId.toString()} adminName={username} />
+            )}
+          </TabsContent>
         </Tabs>
         
         <AddPopUp/>
+        
+        {/* Chat Button - visible for non-admin users only */}
+        {role !== "admin" && !showChat && (
+          <Button 
+            onClick={() => setShowChat(true)}
+            className="fixed bottom-6 right-6 rounded-full w-14 h-14 shadow-lg"
+            size="icon"
+          >
+            💬
+          </Button>
+        )}
+        
+        {/* Chat Window - only for non-admin users */}
+        {role !== "admin" && showChat && currentUserAuthId && (
+          <ChatWindow 
+            userId={currentUserAuthId.toString()} 
+            userName={username}
+            onClose={() => setShowChat(false)}
+          />
+        )}
         
         </div>
       </main>

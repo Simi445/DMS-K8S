@@ -107,7 +107,6 @@ def get_users():
     
     users_list = []
     for user in users:
-        # Get the auth_id for this user
         user_auth = db.session.execute(db.select(UserAuth).filter_by(user_id=user.user_id)).scalar()
         auth_id = user_auth.auth_id if user_auth else None
         
@@ -118,6 +117,40 @@ def get_users():
             "role": user.role
         })
     response = {'ok': 'Users fetched!', 'users': users_list}
+    return app.response_class(
+        response=json.dumps(response),
+        status=200,
+        mimetype='application/json'
+    )
+
+
+@app.route('/admins', methods=["GET"])
+def get_admins():
+    """Get all users with admin role"""
+    admin_users = User.query.filter_by(role='admin').all()
+    if not admin_users:
+        response = {"ok": "No admin users found", "admins": []}
+        return app.response_class(
+            response=json.dumps(response),
+            status=200,
+            mimetype='application/json'
+        )
+    
+    admins_list = []
+    for user in admin_users:
+        user_auth = db.session.execute(db.select(UserAuth).filter_by(user_id=user.user_id)).scalar()
+        auth_id = user_auth.auth_id if user_auth else None
+        
+        admins_list.append({
+            "id": str(auth_id) if auth_id else None,
+            "username": user.username,
+            "name": user.username,  
+            "email": user.email,
+            "role": user.role,
+            "is_online": True 
+        })
+    
+    response = {'ok': 'Admins fetched!', 'admins': admins_list}
     return app.response_class(
         response=json.dumps(response),
         status=200,

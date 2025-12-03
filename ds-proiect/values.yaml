@@ -19,7 +19,7 @@ deviceService:
 
 monitoringService:
   appName: "flask-monitoring"
-  replicaCount: 1
+  replicaCount: 3
   image: "registry.hub.docker.com/simike197/ds-proiect:backend-monitoring"
   postgresName: "postgres-mon"
 
@@ -27,6 +27,17 @@ simulatorService:
   appName: "device-simulator"
   replicaCount: 1
   image: "registry.hub.docker.com/simike197/ds-proiect:device-simulator"
+
+messageService:
+  appName: "flask-messages"
+  replicaCount: 1
+  image: "registry.hub.docker.com/simike197/ds-proiect:backend-messages"
+  storageSize: "1Gi"
+
+loadBalancerService:
+  appName: "load-balancer"
+  replicaCount: 1
+  image: "registry.hub.docker.com/simike197/ds-proiect:load-balancer"
 
 
 apiService:

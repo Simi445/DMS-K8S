@@ -57,11 +57,25 @@ note right of Monitoring
   Query API by user/date
 end note
 
+node "Message Service\n(Flask + WebSocket)\nPort: 5005" as MessageSvc #lightcyan
+note right of MessageSvc
+  Real-time chat support
+  Rule-based & AI responses
+  System notifications
+end note
+
 node "Device Simulator\n(Python)\nPort: 5001" as Simulator #lightyellow
 note right of Simulator
   Generates realistic
   consumption data based
   on time and max capacity
+end note
+
+node "Load Balancer\n(Flask + RabbitMQ)\nPort: 5001" as LoadBalancer #orange
+note right of LoadBalancer
+  Distributes consumption
+  data to monitoring
+  service replicas
 end note
 
 queue "RabbitMQ\n(User Events)\nPort: 5672" as RabbitMQ1 #wheat
@@ -89,15 +103,20 @@ Gateway -(0)- Auth
 Gateway -(0)- User
 Gateway -(0)- Device
 Gateway -(0)- Monitoring
+Gateway -(0)- MessageSvc
 
 Auth -(0)- RabbitMQ1 : publish/consume
 User -(0)- RabbitMQ1 : publish/consume
 Device -(0)- RabbitMQ1 : publish/consume
 Monitoring -(0)- RabbitMQ1 : consume
 
+MessageSvc -(0)- User : admin lookup
+MessageSvc -(0)- Monitoring : alerts
+
 Simulator -(0)- Device : fetch
 Simulator -(0)- RabbitMQ2 : publish
-RabbitMQ2 -(0)- Monitoring : consume
+LoadBalancer -(0)- RabbitMQ2 : consume
+LoadBalancer -(0)- Monitoring : forward
 
 Devs -(0)- Swagger
 
