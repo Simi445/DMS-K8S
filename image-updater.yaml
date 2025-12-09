@@ -6,16 +6,72 @@ metadata:
 spec:
   namespace: argocd
   commonUpdateSettings:
-    updateStrategy: latest
-    allowTags: ^frontend(-.*)?$
+    updateStrategy: newest-build
+    allowTags: "regexp:^frontend(-.*)?$"
   applicationRefs:
     - namePattern: ds-proiect
       images:
         - alias: frontend
-          imageName: simike197/ds-proiect:frontend
+          imageName: registry.hub.docker.com/simike197/ds-proiect:frontend
           manifestTargets:
             helm:
               name: frontendService.image.repository
               tag: frontendService.image.tag
+        - alias: backend-auth
+          imageName: registry.hub.docker.com/simike197/ds-proiect:backend-auth
+          commonUpdateSettings:
+            allowTags: "regexp:^backend-auth(-.*)?$"
+          manifestTargets:
+            helm:
+              name: authService.image.repository
+              tag: authService.image.tag
+        - alias: backend-user
+          imageName: registry.hub.docker.com/simike197/ds-proiect:backend-user
+          commonUpdateSettings:
+            allowTags: "regexp:^backend-user(-.*)?$"
+          manifestTargets:
+            helm:
+              name: userService.image.repository
+              tag: userService.image.tag
+        - alias: backend-device
+          imageName: registry.hub.docker.com/simike197/ds-proiect:backend-device
+          commonUpdateSettings:
+            allowTags: "regexp:^backend-device(-.*)?$"
+          manifestTargets:
+            helm:
+              name: deviceService.image.repository
+              tag: deviceService.image.tag
+        - alias: backend-monitoring
+          imageName: registry.hub.docker.com/simike197/ds-proiect:backend-monitoring
+          commonUpdateSettings:
+            allowTags: "regexp:^backend-monitoring(-.*)?$"
+          manifestTargets:
+            helm:
+              name: monitoringService.image.repository
+              tag: monitoringService.image.tag
+        - alias: backend-messages
+          imageName: registry.hub.docker.com/simike197/ds-proiect:backend-messages
+          commonUpdateSettings:
+            allowTags: "regexp:^backend-messages(-.*)?$"
+          manifestTargets:
+            helm:
+              name: messageService.image.repository
+              tag: messageService.image.tag
+        - alias: api-gateway
+          imageName: registry.hub.docker.com/simike197/ds-proiect:api-gateway
+          commonUpdateSettings:
+            allowTags: "regexp:^api-gateway(-.*)?$"
+          manifestTargets:
+            helm:
+              name: apiService.image.repository
+              tag: apiService.image.tag
+        - alias: swagger
+          imageName: registry.hub.docker.com/simike197/ds-proiect:swagger
+          commonUpdateSettings:
+            allowTags: "regexp:^swagger(-.*)?$"
+          manifestTargets:
+            helm:
+              name: swaggerService.image.repository
+              tag: swaggerService.image.tag
   writeBackConfig:
     method: argocd

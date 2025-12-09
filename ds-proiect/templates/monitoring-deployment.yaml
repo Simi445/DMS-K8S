@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
       - name: {{ .Values.monitoringService.appName }}
-        image: {{ .Values.monitoringService.image }}
+        image: "{{ .Values.monitoringService.image.repository }}:{{ .Values.monitoringService.image.tag }}"
         imagePullPolicy: Always
         env:
           - name: "RABBIT_HOST"

@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: {{ .Values.deviceService.appName }}
-        image: {{ .Values.deviceService.image }}
+        image: "{{ .Values.deviceService.image.repository }}:{{ .Values.deviceService.image.tag }}"
         imagePullPolicy: Always
         env:
           - name: "RABBIT_HOST"

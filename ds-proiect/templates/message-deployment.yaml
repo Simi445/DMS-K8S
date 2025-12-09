@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: {{ .Values.messageService.appName }}
-        image: {{ .Values.messageService.image }}
+        image: "{{ .Values.messageService.image.repository }}:{{ .Values.messageService.image.tag }}"
         imagePullPolicy: Always
         ports:
         - containerPort: 5005

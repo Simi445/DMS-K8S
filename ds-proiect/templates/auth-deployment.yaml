@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: {{ .Values.authService.appName }}
-        image: {{ .Values.authService.image }}
+        image: "{{ .Values.authService.image.repository }}:{{ .Values.authService.image.tag }}"
         imagePullPolicy: Always
         env:
           - name: "SECRET_KEY"

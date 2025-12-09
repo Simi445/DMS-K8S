@@ -2,25 +2,33 @@
 authService:
   appName: "flask-auth"
   replicaCount: 1
-  image: "registry.hub.docker.com/simike197/ds-proiect:backend-auth"
+  image:
+    repository: "registry.hub.docker.com/simike197/ds-proiect"
+    tag: "backend-auth"
   postgresName: "postgres-auth"
 
 userService:
   appName: "flask-user"
   replicaCount: 1
-  image: "registry.hub.docker.com/simike197/ds-proiect:backend-user"
+  image:
+    repository: "registry.hub.docker.com/simike197/ds-proiect"
+    tag: "backend-user"
   postgresName: "postgres-user"
 
 deviceService:
   appName: "flask-device"
   replicaCount: 1
-  image: "registry.hub.docker.com/simike197/ds-proiect:backend-device"
+  image:
+    repository: "registry.hub.docker.com/simike197/ds-proiect"
+    tag: "backend-device"
   postgresName: "postgres-device"
 
 monitoringService:
   appName: "flask-monitoring"
   replicaCount: 3
-  image: "registry.hub.docker.com/simike197/ds-proiect:backend-monitoring"
+  image:
+    repository: "registry.hub.docker.com/simike197/ds-proiect"
+    tag: "backend-monitoring"
   postgresName: "postgres-mon"
 
 simulatorService:
@@ -31,7 +39,9 @@ simulatorService:
 messageService:
   appName: "flask-messages"
   replicaCount: 1
-  image: "registry.hub.docker.com/simike197/ds-proiect:backend-messages"
+  image:
+    repository: "registry.hub.docker.com/simike197/ds-proiect"
+    tag: "backend-messages"
   storageSize: "1Gi"
 
 loadBalancerService:
@@ -43,7 +53,9 @@ loadBalancerService:
 apiService:
   appName: "jwt-verifier"
   replicaCount: 1
-  image: "registry.hub.docker.com/simike197/ds-proiect:api-gateway"
+  image:
+    repository: "registry.hub.docker.com/simike197/ds-proiect"
+    tag: "api-gateway"
 
 frontendService:
   appName: "frontend"
@@ -56,7 +68,9 @@ frontendService:
 swaggerService:
   appName: "swagger"
   replicaCount: 1
-  image: "registry.hub.docker.com/simike197/ds-proiect:swagger"
+  image:
+    repository: "registry.hub.docker.com/simike197/ds-proiect"
+    tag: "swagger"
 
 rabbitmq:
   appName: "rabbitmq"
