@@ -5,6 +5,7 @@ metadata:
   namespace: argocd-image-updater-system
 spec:
   namespace: argocd
+  interval: 30s
   commonUpdateSettings:
     updateStrategy: newest-build
     allowTags: "regexp:^frontend(-.*)?$"
