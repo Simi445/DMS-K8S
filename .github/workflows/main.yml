@@ -40,11 +40,92 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
-      - name: Build and push Docker image
+      - name: Build and push Frontend image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./frontend/Dockerfile
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:frontend-${{ env.COMMIT_SHA }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Build and push Auth Service image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./backend-auth/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:backend-auth-${{ env.COMMIT_SHA }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Build and push User Service image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./backend-user/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:backend-user-${{ env.COMMIT_SHA }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Build and push Device Service image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./backend-devices/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:backend-device-${{ env.COMMIT_SHA }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Build and push Monitoring Service image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./backend-monitoring/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:backend-monitoring-${{ env.COMMIT_SHA }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Build and push Messages Service image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./backend-messages/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:backend-messages-${{ env.COMMIT_SHA }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Build and push API Gateway image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./api-gateway/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:api-gateway-${{ env.COMMIT_SHA }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Build and push Swagger image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./swagger/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:swagger-${{ env.COMMIT_SHA }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Build and push Device Simulator image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./device-simulator/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:device-simulator-${{ env.COMMIT_SHA }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Build and push Load Balancer image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./load-balancer/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:load-balancer-${{ env.COMMIT_SHA }}
           labels: ${{ steps.meta.outputs.labels }}
