@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: {{ .Values.frontendService.appName }}
-        image: {{ .Values.frontendService.image }}
+        image: "{{ .Values.frontendService.image.repository }}:{{ .Values.frontendService.image.tag }}"
         imagePullPolicy: Always
 
 

@@ -1,0 +1,21 @@
+apiVersion: argocd-image-updater.argoproj.io/v1alpha1
+kind: ImageUpdater
+metadata:
+  name: ds-proiect-frontend-updater
+  namespace: argocd-image-updater-system
+spec:
+  namespace: argocd
+  commonUpdateSettings:
+    updateStrategy: latest
+    allowTags: ^frontend(-.*)?$
+  applicationRefs:
+    - namePattern: ds-proiect
+      images:
+        - alias: frontend
+          imageName: simike197/ds-proiect:frontend
+          manifestTargets:
+            helm:
+              name: frontendService.image.repository
+              tag: frontendService.image.tag
+  writeBackConfig:
+    method: argocd

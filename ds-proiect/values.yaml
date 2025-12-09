@@ -48,7 +48,9 @@ apiService:
 frontendService:
   appName: "frontend"
   replicaCount: 1
-  image: "registry.hub.docker.com/simike197/ds-proiect:frontend"
+  image:
+    repository: "registry.hub.docker.com/simike197/ds-proiect"
+    tag: "frontend"
 
 
 swaggerService:
