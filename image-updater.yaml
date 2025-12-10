@@ -5,7 +5,6 @@ metadata:
   namespace: argocd-image-updater-system
 spec:
   namespace: argocd
-  interval: 30s
   applicationRefs:
     - namePattern: ds-proiect
       images:
