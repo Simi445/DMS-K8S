@@ -6,14 +6,14 @@ metadata:
 spec:
   namespace: argocd
   interval: 30s
-  commonUpdateSettings:
-    updateStrategy: newest-build
-    allowTags: "regexp:^frontend(-.*)?$"
   applicationRefs:
     - namePattern: ds-proiect
       images:
         - alias: frontend
           imageName: registry.hub.docker.com/simike197/ds-proiect:frontend
+          commonUpdateSettings:
+            updateStrategy: newest-build
+            allowTags: "regexp:^frontend(-.*)?$"
           manifestTargets:
             helm:
               name: frontendService.image.repository
@@ -21,6 +21,7 @@ spec:
         - alias: backend-auth
           imageName: registry.hub.docker.com/simike197/ds-proiect:backend-auth
           commonUpdateSettings:
+            updateStrategy: newest-build
             allowTags: "regexp:^backend-auth(-.*)?$"
           manifestTargets:
             helm:
@@ -29,6 +30,7 @@ spec:
         - alias: backend-user
           imageName: registry.hub.docker.com/simike197/ds-proiect:backend-user
           commonUpdateSettings:
+            updateStrategy: newest-build
             allowTags: "regexp:^backend-user(-.*)?$"
           manifestTargets:
             helm:
@@ -37,6 +39,7 @@ spec:
         - alias: backend-device
           imageName: registry.hub.docker.com/simike197/ds-proiect:backend-device
           commonUpdateSettings:
+            updateStrategy: newest-build
             allowTags: "regexp:^backend-device(-.*)?$"
           manifestTargets:
             helm:
@@ -45,6 +48,7 @@ spec:
         - alias: backend-monitoring
           imageName: registry.hub.docker.com/simike197/ds-proiect:backend-monitoring
           commonUpdateSettings:
+            updateStrategy: newest-build
             allowTags: "regexp:^backend-monitoring(-.*)?$"
           manifestTargets:
             helm:
@@ -53,6 +57,7 @@ spec:
         - alias: backend-messages
           imageName: registry.hub.docker.com/simike197/ds-proiect:backend-messages
           commonUpdateSettings:
+            updateStrategy: newest-build
             allowTags: "regexp:^backend-messages(-.*)?$"
           manifestTargets:
             helm:
@@ -61,6 +66,7 @@ spec:
         - alias: api-gateway
           imageName: registry.hub.docker.com/simike197/ds-proiect:api-gateway
           commonUpdateSettings:
+            updateStrategy: newest-build
             allowTags: "regexp:^api-gateway(-.*)?$"
           manifestTargets:
             helm:
@@ -69,6 +75,7 @@ spec:
         - alias: swagger
           imageName: registry.hub.docker.com/simike197/ds-proiect:swagger
           commonUpdateSettings:
+            updateStrategy: newest-build
             allowTags: "regexp:^swagger(-.*)?$"
           manifestTargets:
             helm:
