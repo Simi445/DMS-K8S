@@ -356,7 +356,7 @@ export default function Home({handleLogout, role, username, currentUserAuthId}: 
         <div className="w-full max-w-full space-y-8">
         <div className="text-center space-y-4">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-balance">
-        Device & User Management
+        Device & User Management TEST
           </h1>
           {error && (
             <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded inline-block">
